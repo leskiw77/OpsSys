@@ -1,0 +1,41 @@
+
+Test of static library:
+
+List
+###################################
+Init list contact book
+real : 0 , user : 0 , sys : 0  [us]
+
+Add node to list
+real : 3 , user : 4 , sys : 0  [us]
+
+Sort list
+real : 3618 , user : 3600 , sys : 0  [us]
+
+Find optimistic
+real : 0 , user : 0 , sys : 0  [us]
+
+Find pesimistic
+real : 12 , user : 16 , sys : 0  [us]
+
+Delete optimistic
+real : 1 , user : 0 , sys : 0  [us]
+
+Delete pesimistic
+real : 9 , user : 0 , sys : 0  [us]
+
+Tree
+###################################
+Init tree contact book
+real : 0 , user : 0 , sys : 0  [us]
+
+Add node to tree
+real : 0 , user : 0 , sys : 0  [us]
+
+Sort tree
+real : 207 , user : 200 , sys : 0  [us]
+
+
+Test of dynamic library:
+
+

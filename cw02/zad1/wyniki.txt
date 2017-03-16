@@ -1,0 +1,121 @@
+##################################
+SORT
+##################################
+
+--- 4 bytes
+
+lib sort records:2000 bytes:4
+user : 464000 , sys : 104000  [us]
+
+sys sort records:2000 bytes:4
+user : 220000 , sys : 480000  [us]
+
+lib sort records:5000 bytes:4
+user : 780000 , sys : 244000  [us]
+
+sys sort records:5000 bytes:4
+user : 232000 , sys : 716000  [us]
+
+--- 512 bytes
+
+lib sort records:2000 bytes:512
+user : 828000 , sys : 584000  [us]
+
+sys sort records:2000 bytes:512
+user : 356000 , sys : 588000  [us]
+
+lib sort records:4000 bytes:512
+user : 820000 , sys : 796000  [us]
+
+sys sort records:4000 bytes:512
+user : 164000 , sys : 180000  [us]
+
+--- 4096 bytes
+
+lib sort records:1000 bytes:4096
+user : 696000 , sys : 268000  [us]
+
+sys sort records:1000 bytes:4096
+user : 192000 , sys : 680000  [us]
+
+lib sort records:3000 bytes:4096
+user : 36000 , sys : 216000  [us]
+
+sys sort records:3000 bytes:4096
+user : 736000 , sys : 468000  [us]
+
+--- 8192 bytes
+
+lib sort records:1000 bytes:8192
+user : 540000 , sys : 464000  [us]
+
+sys sort records:1000 bytes:8192
+user : 348000 , sys : 852000  [us]
+
+lib sort records:2000 bytes:8192
+user : 372000 , sys : 48000  [us]
+
+sys sort records:2000 bytes:8192
+user : 224000 , sys : 100000  [us]
+
+
+##################################
+SHUFFLE
+##################################
+
+--- 4 bytes
+
+lib shuffle records:100000 bytes:4
+user : 132000 , sys : 504000  [us]
+
+sys shuffle records:100000 bytes:4
+user : 44000 , sys : 376000  [us]
+
+sys shuffle records:1000000 bytes:4
+user : 388000 , sys : 488000  [us]
+
+lib shuffle records:1000000 bytes:4
+user : 964000 , sys : 56000  [us]
+
+--- 512 bytes
+
+lib shuffle records:20000 bytes:512
+user : 40000 , sys : 140000  [us]
+
+sys shuffle records:20000 bytes:512
+user : 20000 , sys : 120000  [us]
+
+
+lib shuffle records:40000 bytes:512
+user : 68000 , sys : 252000  [us]
+
+sys shuffle records:40000 bytes:512
+user : 4000 , sys : 184000  [us]
+
+--- 4096 bytes
+
+lib shuffle records:10000 bytes:4092
+user : 76000 , sys : 204000  [us]
+
+sys shuffle records:10000 bytes:4092
+user : 16000 , sys : 112000  [us]
+
+lib shuffle records:15000 bytes:4092
+user : 120000 , sys : 364000  [us]
+
+sys shuffle records:15000 bytes:4092
+user : 20000 , sys : 248000  [us]
+
+--- 8192 bytes
+
+lib shuffle records:2000 bytes:8192
+user : 8000 , sys : 36000  [us]
+
+sys shuffle records:2000 bytes:8192
+user : 8000 , sys : 36000  [us]
+
+lib shuffle records:10000 bytes:8192
+user : 48000 , sys : 480000  [us]
+
+sys shuffle records:10000 bytes:8192
+user : 24000 , sys : 252000  [us]

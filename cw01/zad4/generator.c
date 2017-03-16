@@ -1,0 +1,116 @@
+#include "generator.h"
+
+char *names[] = {"Emily", "Jodi", "Vilma", "Janean", "Miguel", "Lili", "Stepanie", "Randal", "Bennie", "Mervin",
+                 "Marcell", "Eileen", "Mariette", "Dolores", "Valerie", "Natisha", "Layla", "Lisha", "Ellen",
+                 "Earleen"};
+char *surnames[] = {"Raymond", "Good", "Young", "Blackburn", "Frazier", "Poole", "Colon", "Holloway", "Sims", "Baker",
+                    "Craft", "Kirby", "Salazar", "Mcintosh", "Callahan", "Goff", "Mathews", "Witt", "Peck", "Harris",
+                    "Benjamin", "Ramirez", "Marsh", "Stark", "Brennan", "Craig", "Battle", "Wiggins", "Bishop", "Moody",
+                    "Lynn", "Bernard", "Odom", "Contreras", "Cook", "Drake", "Mills", "Cunningham", "Mann", "Lester",
+                    "Wise", "Yang", "Roman", "Larson", "Hardin", "Parker", "Pugh", "Delacruz", "Wilcox", "Walter",
+                    "Mercado", "Estrada", "Shepherd", "Howard", "Sykes", "Merrill", "Barr", "Paul", "Blankenship",
+                    "Espinoza", "Miller", "York", "Shannon", "Good", "Cervantes", "Norman", "Dillon", "William",
+                    "Benjamin", "Kerr", "Marks", "Marshall", "Austin", "Bright", "Cabrera", "Rice", "French", "Summers",
+                    "Chaney", "Britt", "Trevino", "Burnett", "Shaffer", "Matthews", "Saunders", "Sanford", "Gonzalez",
+                    "Scott", "Kline", "Yang", "Horton", "Dillard", "Luna", "Alston", "Bauer", "Taylor", "Chaney",
+                    "Warren", "Mueller", "Weber"};
+char *emails[] = {"nulla.Integer@vitae.net", "sollicitudin.a@tortordictumeu.co.uk",
+                  "fringilla.Donec.feugiat@laoreet.org", "leo.elementum@massa.org", "ipsum@scelerisquescelerisque.edu",
+                  "bibendum.Donec@ullamcorperviverraMaecenas.net", "a.mi.fringilla@tellussem.co.uk",
+                  "eget@metussit.org", "risus.quis@augue.org", "interdum.Curabitur@lectusrutrumurna.edu",
+                  "vitae@nibhPhasellus.com", "eu.ultrices.sit@vitaeerat.org", "luctus@aliquamadipiscinglacus.net",
+                  "malesuada.augue@cursusin.co.uk", "Vestibulum.accumsan.neque@eutellus.com",
+                  "mauris.Suspendisse@ante.net", "nonummy.ut.molestie@massaMaurisvestibulum.ca", "eu@dolortempus.co.uk",
+                  "quis@nibhsitamet.ca", "nibh@leo.edu", "ultrices.iaculis.odio@mauris.ca",
+                  "aliquet.nec.imperdiet@gravidamolestiearcu.net", "lectus@a.com", "rutrum@mipede.co.uk",
+                  "Etiam.laoreet.libero@fermentum.ca", "eu@Curabitur.edu", "vehicula.risus.Nulla@eget.net",
+                  "Mauris@sapien.org", "nulla.Cras.eu@nonummyacfeugiat.net", "nec@natoque.com",
+                  "lacus.Quisque@quisdiam.com", "dui.Cras@ipsumprimis.com", "risus@intempus.org", "erat@eueuismod.com",
+                  "ultricies@mollisDuis.com", "vitae@nequeNullam.co.uk", "elementum.purus@tellussemmollis.com",
+                  "nostra.per@consequat.org", "ipsum.dolor.sit@elitAliquamauctor.edu",
+                  "gravida.molestie.arcu@Fusce.com", "ultrices.a.auctor@disparturientmontes.edu", "Curabitur@ami.net",
+                  "adipiscing.ligula@dignissim.com", "Suspendisse.sed.dolor@fringillacursuspurus.co.uk",
+                  "Nam.consequat@sitamet.ca", "Mauris.eu.turpis@turpisegestasFusce.co.uk", "venenatis@maurisanunc.org",
+                  "dis.parturient.montes@Mauris.edu", "vel@gravida.com", "rutrum@quamvelsapien.net",
+                  "inceptos.hymenaeos@venenatis.com", "lectus.rutrum.urna@nuncnulla.net",
+                  "nulla.Donec@Crasinterdum.com", "nec.urna@Nuncac.edu", "ante.iaculis@turpis.org",
+                  "magna.et.ipsum@non.org", "parturient.montes.nascetur@semperrutrum.edu",
+                  "Vivamus.molestie.dapibus@dignissimMaecenasornare.edu", "Cum@pedePraesent.org",
+                  "eget.varius.ultrices@Aliquamerat.com", "mollis.vitae.posuere@pede.net",
+                  "lacinia.orci@urnasuscipit.net", "non.feugiat.nec@adipiscinglacusUt.net",
+                  "in.consectetuer@molestie.edu", "nunc.risus.varius@dui.ca", "Duis@velitQuisque.co.uk",
+                  "Cras.interdum.Nunc@egestas.ca", "quis.turpis.vitae@diam.com", "aliquet@Aliquam.net",
+                  "orci.consectetuer@egestas.ca", "mi@ad.com", "elementum.at@orci.org",
+                  "Mauris.quis.turpis@lobortisnisinibh.edu", "nonummy.ipsum@luctus.co.uk",
+                  "lacus@ridiculusmusProin.co.uk", "egestas.Aliquam.nec@orciDonec.org", "eu.erat.semper@arcu.com",
+                  "amet@nonegestasa.co.uk", "non@nibhDonecest.net", "sem@rutrumurna.net",
+                  "ultrices.sit.amet@tellus.org", "turpis@justo.edu", "Duis@risusquisdiam.ca", "mi.enim@augue.ca",
+                  "non.luctus.sit@magnaCras.edu", "a.odio@Nuncsedorci.edu", "In.ornare.sagittis@pellentesque.co.uk",
+                  "et.magna@tempusrisusDonec.com", "Fusce.aliquam.enim@facilisisloremtristique.edu",
+                  "justo@fermentumarcu.com", "a.mi@euismodin.net", "hymenaeos.Mauris.ut@malesuadavelconvallis.org",
+                  "dui.nec.tempus@Cras.net", "nibh.vulputate.mauris@purusDuiselementum.org",
+                  "felis.adipiscing@egestas.co.uk", "leo.in@vitae.org", "In.ornare@mieleifend.ca",
+                  "varius@blanditmattis.co.uk", "mi.lorem.vehicula@vestibulumloremsit.com",
+                  "nec.malesuada@pedemalesuadavel.ca"};
+char *numbers[] = {"135-6420", "1-667-833-4033", "1-130-758-9809", "627-4830", "1-285-861-2864", "1-263-456-0780",
+                   "1-973-325-0732", "1-786-130-5758", "118-2412", "102-7732", "214-5252", "742-0186", "508-6300",
+                   "390-1439", "692-3045", "209-7876", "1-137-913-5831", "228-7059", "1-441-745-7384", "1-755-505-0562",
+                   "180-6201", "269-9853", "101-9183", "1-358-332-7087", "377-6965", "1-499-547-6676", "1-397-480-7202",
+                   "1-751-654-8887", "191-9628", "1-628-798-3162", "469-9673", "1-202-224-1323", "505-0596",
+                   "1-813-778-7210", "801-5458", "1-799-114-2864", "612-4671", "569-3642", "816-8528", "962-3431",
+                   "179-4443", "313-8119", "292-2793", "728-9516", "1-754-733-4707", "592-5162", "1-406-391-4449",
+                   "536-4562", "1-571-510-5489", "1-162-783-6266", "635-9826", "436-3532", "924-5810", "1-788-118-4442",
+                   "1-673-459-1650", "1-890-372-8436", "748-1467", "1-452-440-3621", "1-505-973-7545", "1-754-929-8610",
+                   "841-9818", "1-770-253-5183", "218-9752", "564-2749", "1-556-954-2359", "571-5055", "894-6659",
+                   "1-336-480-4150", "520-9761", "1-605-855-3310", "1-903-900-7305", "1-500-368-8738", "746-7236",
+                   "127-4407", "1-818-871-2405", "1-653-118-8362", "803-7568", "1-835-294-1564", "1-911-118-6524",
+                   "102-8837", "118-2719", "171-6419", "1-539-673-5596", "772-2272", "625-0408", "1-465-934-8663",
+                   "1-596-684-8075", "766-9798", "1-807-943-7974", "1-437-340-7731", "658-4090", "1-707-515-6535",
+                   "892-1376", "1-368-643-1573", "1-664-324-5435", "1-275-721-4054", "1-289-642-2455", "766-8675",
+                   "291-8953", "547-5804"};
+char *adresses[] = {"Ap #366-5224 Ridiculus Street", "P.O. Box 402, 4804 Sagittis. Ave", "4427 Dolor. St.",
+                    "764-5561 Vestibulum Rd.", "P.O. Box 296, 2811 Sed Street", "850-564 Nunc, St.",
+                    "P.O. Box 786, 8361 Natoque Avenue", "956-6691 Fusce Avenue", "3908 Suspendisse Ave",
+                    "5043 Non, Ave", "487-2658 Netus Av.", "Ap #136-7043 Enim, Road", "Ap #732-2210 Augue St.",
+                    "5501 Fusce Av.", "5589 Augue Rd.", "941-1494 Et Rd.", "Ap #579-2239 Eros. Av.",
+                    "708-4298 Arcu St.", "Ap #473-6979 Hendrerit. Road", "994-1801 Duis St.", "9781 Accumsan Avenue",
+                    "207-1753 Ornare Street", "871 Semper Rd.", "P.O. Box 324, 6854 Ridiculus St.", "3712 Fusce Av.",
+                    "P.O. Box 328, 5385 Semper Ave", "3862 Fringilla. Street", "Ap #751-7755 Vitae Rd.",
+                    "7951 Ultricies Ave", "249-3905 Eu St.", "809-3547 Phasellus St.", "6669 Dolor, Rd.",
+                    "Ap #695-6406 At Avenue", "3246 Nascetur Road", "8387 Ultricies St.", "488-2645 Commodo Rd.",
+                    "1049 Diam St.", "3637 Aliquet. Street", "P.O. Box 954, 3736 Sed, St.", "5040 Arcu. St.",
+                    "P.O. Box 468, 6290 Malesuada St.", "2747 Nonummy. Avenue", "P.O. Box 350, 5121 Auctor, Street",
+                    "P.O. Box 533, 8125 Nullam Ave", "2351 Nulla Rd.", "609-1601 Metus. St.",
+                    "P.O. Box 138, 9729 Purus Rd.", "Ap #470-5817 Volutpat Street", "Ap #913-8248 Quam. Ave",
+                    "957 Sit Rd.", "4550 Neque St.", "9828 Lorem, Av.", "Ap #914-2423 Sapien St.",
+                    "9727 Consectetuer Road", "715-9184 Ut St.", "992 Metus Rd.", "2404 Urna, Street",
+                    "Ap #807-6243 Pellentesque Ave", "Ap #617-8352 Lorem Rd.", "P.O. Box 970, 6059 Penatibus Ave",
+                    "Ap #804-4218 Ac Av.", "8643 Praesent Street", "P.O. Box 924, 9825 Ultrices. St.",
+                    "P.O. Box 175, 4138 Diam. Ave", "P.O. Box 360, 1001 Amet Rd.", "P.O. Box 515, 5794 Consequat St.",
+                    "Ap #527-2829 Duis St.", "P.O. Box 174, 7636 Augue Ave", "588-8574 Orci, St.", "582-7259 Donec Rd.",
+                    "298 Lacus. Rd.", "2087 Integer St.", "Ap #687-6998 Mi Avenue", "197-9643 Nullam Av.",
+                    "Ap #685-7663 Vitae Rd.", "Ap #132-1571 Nisl. Street", "Ap #635-5078 Sapien. Avenue",
+                    "975-6523 Commodo St.", "P.O. Box 940, 4625 Nec Rd.", "Ap #963-6532 Consectetuer Rd.",
+                    "1781 Suscipit, Ave", "P.O. Box 275, 4930 Donec St.", "Ap #690-2006 Proin Avenue",
+                    "Ap #113-7201 Adipiscing Rd.", "553-7671 Mauris St.", "104-1854 Quam. St.", "272 Metus. Ave",
+                    "4284 Cras Avenue", "Ap #939-6613 Duis Avenue", "836-5818 Auctor Road",
+                    "P.O. Box 555, 5755 Auctor St.", "P.O. Box 875, 3366 Malesuada St.", "6538 Id, Rd.",
+                    "5312 Lobortis Road", "268 Luctus Av.", "Ap #283-460 Libero Rd.", "P.O. Box 452, 352 Mauris. Rd.",
+                    "Ap #958-384 Nec St.", "Ap #382-8096 Felis St.", "207-154 Eu Av."};
+
+
+listNode * randomListNode() {
+    person *p;
+    date *d = createDate(rand() % 30 + 1, rand() % 12 + 1, rand() % 50 + 1950);
+    p = createPerson(names[rand() % 100], surnames[rand() % 100], d, emails[rand() % 100], numbers[rand() % 100],
+                     adresses[rand() % 100]);
+    return createListNode(p);
+}
+
+treeNode * randomTreeNode() {
+    person *p;
+    date *d = createDate(rand() % 30 + 1, rand() % 12 + 1, rand() % 50 + 1950);
+    p = createPerson(names[rand() % 100], surnames[rand() % 100], d, emails[rand() % 100], numbers[rand() % 100],
+                     adresses[rand() % 100]);
+    return createTreeNode(p);
+}
