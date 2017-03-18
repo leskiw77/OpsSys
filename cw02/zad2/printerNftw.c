@@ -1,11 +1,11 @@
 #include "printerNftw.h"
 
-/*
- *  TODO : 1) poprawić zeby wyswietlało tylko wieksze od zadanego rozmiaru
- *         2) niech wyswietla tylko pliki regularne
- *
- */
-static int printSingleFile (const char *fpath, const struct stat *sb, int typeflag){
+static int printSingleFile (const char *fpath, const struct stat *sb, int type){
+
+    // jesli inny niz plik regularny to idziemy dalej
+    if(type != FTW_F) {
+        return 0;
+    }
 
     // rozmiar pliku :
     long size = sb->st_size;
@@ -20,7 +20,7 @@ static int printSingleFile (const char *fpath, const struct stat *sb, int typefl
     convertAccessMode(accMode,sb->st_mode);
 
     printf("%s   %li   %s   %s\n", fpath, size, accMode, time);
-    return 0; // necessary to continue tree walking
+    return 0;
 }
 
 
