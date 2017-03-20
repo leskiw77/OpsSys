@@ -9,6 +9,6 @@
 #include <unistd.h>
 #include <time.h>
 
-void printGreaterStat(DIR * dir, char * fullPath, int size);
+void printGreaterStat(char * fullPath, int size);
 
 #endif //LAB2SYSOPY_DIRECTIONSPRINTER_H_H
