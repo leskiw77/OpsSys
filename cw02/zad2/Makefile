@@ -16,7 +16,7 @@ printerStat.o : printerStat.c printerStat.h
 	$(CC) -c printerStat.c $(CFLAGS) -o printerStat.o
 
 run : prog
-	./prog ./test 0 nftw
+	./prog ./test 2000 nftw
 
 clean:
 	rm -f main.o printerStat.o printerNftw.o

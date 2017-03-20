@@ -1,6 +1,6 @@
 #include "printerStat.h"
 
-void printGreaterStat(char *dirPath, int minSize) {
+void printGreaterStat(char *dirPath, int maxSize) {
     DIR *dir = opendir(dirPath);
     if (dir == NULL) {
         printf("Blad otwierania katalogu %s\n", dirPath);
@@ -9,6 +9,7 @@ void printGreaterStat(char *dirPath, int minSize) {
     struct dirent *file;
     struct stat st;
     while ((file = readdir(dir)) != NULL) {
+
         // tylko pliki regularne :
         if (file->d_type == 8) {
             // pelna nazwa pliku :
@@ -22,7 +23,7 @@ void printGreaterStat(char *dirPath, int minSize) {
             // rozmiar :
             long size = st.st_size;
 
-            if (size >= minSize) {
+            if (size <= maxSize) {
                 // czas ostatniej modyfikacji :
                 char time[20];
                 time_t modTime = st.st_mtime;
@@ -51,7 +52,7 @@ void printGreaterStat(char *dirPath, int minSize) {
             strcpy(innerDirPath, dirPath);
             strcat(innerDirPath, file->d_name);
             strcat(innerDirPath, "/");
-            printGreaterStat(innerDirPath,minSize);
+            printGreaterStat(innerDirPath,maxSize);
         }
     }
     closedir(dir);

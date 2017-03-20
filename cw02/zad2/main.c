@@ -20,10 +20,11 @@ int main (int argc, char ** argv) {
         return 1;
     }
 
+    printf("\n-------------------------------\n");
     if(strcmp(argv[3],"stat")==0){
         printGreaterStat(fullPath,size);
     } else if(strcmp(argv[3],"nftw")==0){
-        printGreaterNftw(fullPath,100);
+        printGreaterNftw(fullPath,size);
     } else {
         printf("Bledny tryb uruchomienia programu");
         return 1;

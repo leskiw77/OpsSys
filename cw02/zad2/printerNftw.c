@@ -1,14 +1,14 @@
 #include "printerNftw.h"
 
-static int printSingleFile (const char *fpath, const struct stat *sb, int type){
+static long maxSize = 0;
 
-    // jesli inny niz plik regularny to idziemy dalej
-    if(type != FTW_F) {
+static int printSingleFile (const char *fpath, const struct stat *sb, int type){
+    // rozmiar pliku
+    long size = sb->st_size;
+
+    if(size > maxSize) {
         return 0;
     }
-
-    // rozmiar pliku :
-    long size = sb->st_size;
 
     // czas ostatniej modyfikacji :
     char time[20];
@@ -17,30 +17,25 @@ static int printSingleFile (const char *fpath, const struct stat *sb, int type){
 
     // prawa dostepu :
     char accMode[10];
-    convertAccessMode(accMode,sb->st_mode);
-
+    mode_t fMode = sb->st_mode;
+    for(int i=0;i<9;i++)  accMode[i] = '-';
+    if(fMode & S_IRUSR) accMode[0] = 'r';
+    if(fMode & S_IWUSR) accMode[1] = 'w';
+    if(fMode & S_IXUSR) accMode[2] = 'x';
+    if(fMode & S_IRGRP) accMode[3] = 'r';
+    if(fMode & S_IWGRP) accMode[4] = 'w';
+    if(fMode & S_IXGRP) accMode[5] = 'x';
+    if(fMode & S_IROTH) accMode[6] = 'r';
+    if(fMode & S_IWOTH) accMode[7] = 'w';
+    if(fMode & S_IXOTH) accMode[8] = 'x';
+    accMode[9] = '\0';
+    
     printf("%s   %li   %s   %s\n", fpath, size, accMode, time);
     return 0;
 }
 
-
 void printGreaterNftw(char * dir, int size) {
-    int flags = 0;
-    flags |= FTW_F;
-    nftw(dir, printSingleFile,20,flags);
+    maxSize = size;
+    nftw(dir, printSingleFile,FTW_F,100);
 }
 
-
-void convertAccessMode(char res[10], mode_t accMode) {
-    for(int i=0;i<9;i++)  res[i] = '-';
-    if(accMode & S_IRUSR) res[0] = 'r';
-    if(accMode & S_IWUSR) res[1] = 'w';
-    if(accMode & S_IXUSR) res[2] = 'x';
-    if(accMode & S_IRGRP) res[3] = 'r';
-    if(accMode & S_IWGRP) res[4] = 'w';
-    if(accMode & S_IXGRP) res[5] = 'x';
-    if(accMode & S_IROTH) res[6] = 'r';
-    if(accMode & S_IWOTH) res[7] = 'w';
-    if(accMode & S_IXOTH) res[8] = 'x';
-    res[9] = '\0';
-}
