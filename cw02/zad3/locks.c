@@ -9,13 +9,29 @@ bool setLock(int fd, int byteNumber, char type) {
         lck.l_type = F_RDLCK;
     } else {
         lck.l_type = F_WRLCK;
-    };
+    }
     lck.l_start = byteNumber;
     lck.l_whence = SEEK_SET;
     lck.l_len = 1;
     if (fcntl(fd, F_SETLK, &lck) == -1) {
-        if (errno != EACCES && errno != EAGAIN) {
-            printf("Blad 'fcntl' : %s errno: %d", strerror(errno), errno);
+        if (errno == EACCES || errno == EAGAIN) {
+            printf("Ustawiono lock na podany bajt. Czy chcesz zaczekać na usuniecie? [t/n]");
+
+            char c ;
+            while ((c = getchar()) != '\n' && c != EOF) { ;}
+            c = getchar();
+
+            if (c == 't') {
+                if(fcntl(fd, F_SETLKW, &lck) == -1){
+                    printf("Unexpected error\n");
+                }
+            } else{
+                return false;
+            }
+
+
+        } else{
+            printf("Unexpected error\n");
             return false;
         }
     }
@@ -29,10 +45,20 @@ bool resetLock(int fd, int byteNumber) {
     lck.l_whence = SEEK_SET;
     lck.l_len = 1;
     if (fcntl(fd, F_SETLK, &lck) == -1) {
-        if (errno != EACCES && errno != EAGAIN) {
+        printf("trurur");
+        if (errno == EACCES || errno == EAGAIN) {
+            printf("Brak locka?");
+
+        }
+        if (errno != EACCES && errno != EAGAIN) { //permition denied, temporarily unavailable
             printf("Blad 'fcntl' : %s \nerrno: %d", strerror(errno), errno);
             return false;
         }
+    }
+    printf("chuj");
+
+    if (lck.l_type != F_UNLCK) {
+     printf("Brak locka\n");
     }
     return true;
 }
