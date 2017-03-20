@@ -7,14 +7,12 @@ int main (int argc, char ** argv) {
         return 1;
     }
 
-    // otwieramy katalog :
-    DIR * directory = NULL;
-    char * fullPath = argv[1];
-    directory = opendir(fullPath);
-    if(directory==NULL) {
-        printf("Blad otwierania katalogu");
-        return 1;
+    char fullPath[256];
+    strcpy(fullPath, argv[1]);
+    if(fullPath[strlen(fullPath)-1] != '/') {
+        strcat(fullPath, "/");
     }
+
     int size = -1;
     size = atoi(argv[2]);
     if(size == -1) {
@@ -23,13 +21,12 @@ int main (int argc, char ** argv) {
     }
 
     if(strcmp(argv[3],"stat")==0){
-        printGreaterStat(directory,fullPath,size);
+        printGreaterStat(fullPath,size);
     } else if(strcmp(argv[3],"nftw")==0){
         printGreaterNftw(fullPath,100);
     } else {
         printf("Bledny tryb uruchomienia programu");
         return 1;
     }
-    closedir (directory);
     return 0;
 }
