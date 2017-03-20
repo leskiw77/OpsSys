@@ -1,19 +1,21 @@
 #include "library.h"
 
-
 void libGenerate(char * fileName, int records, int bytes){
     FILE * file = fopen(fileName, "w");
     if(file==NULL){
         printf("Cant open the file");
         exit(1);
     }
+
+
+    FILE * randFile = fopen("/dev/random", "r");
+
     char * toSave = (char * ) malloc(sizeof(char) * bytes);
 
     for(int i=0;i<records;i++){
 
-        for (int j = 0; j < bytes; ++j) {
-            toSave[j]=(char)((rand()%26)+'A');
-        }
+        fread(toSave, sizeof(char), bytes, randFile);
+
         toSave[bytes-1]='\n';
 
         fwrite(toSave,sizeof(char),bytes,file);
@@ -21,6 +23,7 @@ void libGenerate(char * fileName, int records, int bytes){
 
     free(toSave);
     fclose(file);
+    fclose(randFile);
 }
 
 void libSort(char * fileName, int records, int bytes){
