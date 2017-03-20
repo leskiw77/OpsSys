@@ -9,7 +9,7 @@ void printMenu(void) {
     printf("4) Zwolnienie wybranego rygla\n");
     printf("5) Odczyt wybranego znaku pliku\n");
     printf("6) Zmiana wybranego znaku pliku\n");
-    printf("0) Wyjscie\n : ");
+    printf("0) Wyjscie\n");
 }
 
 int main(int argc, char *argv[]) {
@@ -22,46 +22,41 @@ int main(int argc, char *argv[]) {
         printf("Blad odczytu pliku");
         return 1;
     }
+
+    char * command;
     printMenu();
-    char command = getchar();
-    switch (command) {
-        case '0': {
+
+    while (1) {
+        printf(" command > ");
+        scanf("%s",command);
+        if(strcmp(command,"0")==0) {
             return 0;
-        }
-        case '1': {
+        } else if(strcmp(command,"1")==0) {
             printf("Podaj nr bajtu : ");
             int byteNumber = 0;
             scanf("%i", &byteNumber);
             if (setLock(file, byteNumber, 'r')) {
                 printf("Blokada odczytu ustawiona\n");
             }
-        }
-            break;
-        case '2': {
+        } else if(strcmp(command,"2")==0) {
             printf("Podaj nr bajtu : ");
             int byteNumber = 0;
             scanf("%i", &byteNumber);
             if (setLock(file, byteNumber, 'w')) {
                 printf("Blokada zapisu ustawiona\n");
             }
-        }
-            break;
-        case '3': {
+        } else if(strcmp(command,"3")==0) {
             if (printLocks(file)) {
                 printf("OK\n");
             }
-        }
-            break;
-        case '4': {
+        } else if(strcmp(command,"4")==0) {
             printf("Podaj nr bajtu : ");
             int byteNumber = 0;
             scanf("%i", &byteNumber);
             if (resetLock(file, byteNumber)) {
                 printf("Blokada zdjeta\n");
             }
-        }
-            break;
-        case '5': {
+        } else if(strcmp(command,"5")==0) {
             printf("Podaj nr bajtu : ");
             int byteNumber = 0;
             char byteValue;
@@ -69,9 +64,7 @@ int main(int argc, char *argv[]) {
             if (readByte(file, byteNumber, &byteValue)) {
                 printf("Odczytana wartosc : %c\n", byteValue);
             }
-        }
-            break;
-        case '6': {
+        } else if(strcmp(command,"6")==0) {
             printf("Podaj nr bajtu i wartosc : ");
             int byteNumber = 0;
             char byteValue = '0';
@@ -79,11 +72,9 @@ int main(int argc, char *argv[]) {
             if (writeByte(file, byteNumber, byteValue)) {
                 printf("OK\n");
             }
-        }
-            break;
-        case 'h' : {
+        } else if(strcmp(command,"h")==0) {
             printMenu();
-            printf("\n\n");
+            printf("\n");
         }
     }
     return 0;
