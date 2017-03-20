@@ -3,18 +3,17 @@
 void sysGenerate(char * fileName, int records, int bytes){
     int filedesc;
     char * toSave = (char *) malloc(sizeof(char) * bytes);
-    //S_IRUSR	| S_IWUSR	| S_IXUSR
     if((filedesc=open(fileName, O_WRONLY | O_TRUNC | O_CREAT,0666)) == -1){
         printf("Cant open the file");
         exit(1);
     }
 
+    FILE * randFile = fopen("/dev/random", "r");
 
     for(int i=0;i<records;i++){
 
-        for (int j = 0; j < bytes; ++j) {
-            toSave[j]=(char)((rand()%26)+'A');
-        }
+        fread(toSave, sizeof(char), bytes, randFile);
+
         toSave[bytes-1]='\n';
 
         write(filedesc, toSave, bytes);
