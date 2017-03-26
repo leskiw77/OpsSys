@@ -28,7 +28,7 @@ int main(int argc, char ** argv) {
     FILE * fp = fopen(argv[1], "r");
 
     if (fp == NULL){
-        printf("Dupa");
+        printf("Error of opening the file");
         return 2;
     }
 
