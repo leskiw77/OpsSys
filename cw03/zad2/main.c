@@ -45,10 +45,8 @@ int main(int argc, char **argv) {
     int maxSize = atoi(argv[3]);
 
     // ustawienie ograniczen na procesy potomne :
-    sizeLimit.rlim_cur = maxSize/2;
-    timeLimit.rlim_cur = maxTime/2;
-    sizeLimit.rlim_max = maxSize;
-    timeLimit.rlim_max = maxTime;
+    //sizeLimit.rlim_cur = maxSize/2;
+    //timeLimit.rlim_cur = maxTime/2;
     sizeLimit.rlim_max = maxSize;
     timeLimit.rlim_max = maxTime;
 
@@ -87,8 +85,9 @@ int main(int argc, char **argv) {
             default :
 
                 pid = fork();
-                printf("\nCommand : %s \n",comands[0]);
                 if(pid==0) {
+                    printf("\n-----------------------\n"
+                                   "Command : %s \n",comands[0]);
                     setrlimit(RLIMIT_AS,&sizeLimit);
                     setrlimit(RLIMIT_CPU,&timeLimit);
                     if(execvp(comands[0],comands) == -1){
@@ -101,14 +100,16 @@ int main(int argc, char **argv) {
                     wait3(&status,0,&usage);
                     if (WIFEXITED(exitStatus) && WEXITSTATUS(status) != 0) {
                         fprintf(stderr,"Porazka potomka\n");
-                        exit(3);
+                        exit(4);
                     } else {
-                        printf("\nok\n");
+                        printf("\nTimes : system = %i , users = %i\n",
+                               usage.ru_stime.tv_usec,
+                               usage.ru_utime.tv_usec);
                     }
                 } else {
                     // nie udalo sie utworzyc procesu potomnego :
                     perror("fork error");
-                    exit(4);
+                    exit(5);
                 }
         }
         for (int j = 0; j < i; ++j) {
@@ -123,7 +124,7 @@ int main(int argc, char **argv) {
 
     fclose(fp);
     free(line);
-    printf("\n\n");
+    printf("\n-----------------------\n");
     return 0;
 }
 

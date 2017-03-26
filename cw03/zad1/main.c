@@ -71,10 +71,9 @@ int main(int argc, char ** argv) {
                     perror("fork error");
                 }
                 else if (pid == 0) {
-
                     if(execvp(comands[0],comands) != 0){
                         printf("Error occurred while running %s command.\n",comands[0]);
-                        exit(11);
+                        exit(1);
                     }
                 } else {
                     int status;
