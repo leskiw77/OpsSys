@@ -1,0 +1,6 @@
+#TestFile ls
+ls
+#TestFile
+ls
+./hello
+./infLoop
