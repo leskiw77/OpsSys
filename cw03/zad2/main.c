@@ -12,7 +12,6 @@
 #define MAX_PARAMS 20
 #define MAX_LENGTH 20
 
-
 //Zeby działo w konsoli musisz zrobic export PATH=$PATH:. albo export PATH=$PATH:$(pwd)
 int main(int argc, char **argv) {
 
@@ -33,7 +32,7 @@ int main(int argc, char **argv) {
 
     if (fp == NULL) {
         printf("Error while opening file");
-        return 2;
+        return 1;
     }
 
     char *line = (char *) malloc(sizeof(char) * MAX_LENGTH * MAX_PARAMS);
@@ -44,9 +43,10 @@ int main(int argc, char **argv) {
     int maxTime = atoi(argv[2]);
     int maxSize = atoi(argv[3]);
 
+
     // ustawienie ograniczen na procesy potomne :
-    //sizeLimit.rlim_cur = maxSize/2;
-    //timeLimit.rlim_cur = maxTime/2;
+    //sizeLimit.rlim_cur = maxSize;
+    //timeLimit.rlim_cur = maxTime;
     sizeLimit.rlim_max = maxSize;
     timeLimit.rlim_max = maxTime;
 
@@ -83,7 +83,6 @@ int main(int argc, char **argv) {
                 break;
 
             default :
-
                 pid = fork();
                 if(pid==0) {
                     printf("\n-----------------------\n"
@@ -92,15 +91,15 @@ int main(int argc, char **argv) {
                     setrlimit(RLIMIT_CPU,&timeLimit);
                     if(execvp(comands[0],comands) == -1){
                         printf("Error occurred while running %s command.\n",comands[0]);
-                        exit(3);
+                        exit(1);
                     }
+                    exit(0);
                 } else if(pid > 0) {
-                    int exitStatus;
                     int status;
                     wait3(&status,0,&usage);
-                    if (WIFEXITED(exitStatus) && WEXITSTATUS(status) != 0) {
-                        fprintf(stderr,"Porazka potomka\n");
-                        exit(4);
+                    if (WIFEXITED(status) != 1 || WEXITSTATUS(status) != 0) {
+                        fprintf(stderr,"Failed, wstatus = %i\n",status);
+                        exit(1);
                     } else {
                         printf("\nTimes : system = %i , users = %i\n",
                                usage.ru_stime.tv_usec,
@@ -109,7 +108,7 @@ int main(int argc, char **argv) {
                 } else {
                     // nie udalo sie utworzyc procesu potomnego :
                     perror("fork error");
-                    exit(5);
+                    exit(1);
                 }
         }
         for (int j = 0; j < i; ++j) {

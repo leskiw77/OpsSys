@@ -1,6 +1,7 @@
 #TestFile ls
 ls
 #TestFile
-ls
+ls -l
 ./hello
 ./infLoop
+./hello
