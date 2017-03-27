@@ -47,7 +47,7 @@ int main(int argc, char **argv) {
     // ustawienie ograniczen na procesy potomne :
     //sizeLimit.rlim_cur = maxSize;
     //timeLimit.rlim_cur = maxTime;
-    sizeLimit.rlim_max = maxSize;
+    sizeLimit.rlim_max = maxSize * 1000000; //to mb
     timeLimit.rlim_max = maxTime;
 
     // dla kazdej linii z pliku wsadowego :
