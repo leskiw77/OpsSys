@@ -21,6 +21,9 @@ int main(int argc, char **argv) {
         return 1;
     }
 
+    const long long timeLimitValue =  atoll(argv[2]);
+    const long long sizeLimitValue =  atoll(argv[3]) * 1024 * 1024;
+
     char *pch;
     char *comands[MAX_PARAMS + 1];
     comands[MAX_PARAMS] = NULL;
@@ -38,15 +41,7 @@ int main(int argc, char **argv) {
     char *line = (char *) malloc(sizeof(char) * MAX_LENGTH * MAX_PARAMS);
     size_t len = 0;
     pid_t pid;
-    struct rlimit sizeLimit,timeLimit;
     struct rusage usage;
-    int maxTime = atoi(argv[2]);
-    int maxSize = atoi(argv[3]);
-
-
-    // ustawienie ograniczen na procesy potomne :
-    sizeLimit.rlim_max = maxSize * 1000000; //to mb
-    timeLimit.rlim_max = maxTime;
 
     // dla kazdej linii z pliku wsadowego :
     while (getline(&line, &len, fp) != -1) {
@@ -85,13 +80,30 @@ int main(int argc, char **argv) {
                 if(pid==0) {
                     printf("\n-----------------------\n"
                                    "Command : %s \n",comands[0]);
-                    setrlimit(RLIMIT_AS,&sizeLimit);
-                    setrlimit(RLIMIT_CPU,&timeLimit);
+
+                    struct rlimit sLimit;
+                    rlim_t maxSize = (rlim_t)sizeLimitValue;
+                    sLimit.rlim_cur = maxSize/2;
+                    sLimit.rlim_max = maxSize;
+                    if( setrlimit(RLIMIT_AS,&sLimit) == -1 ) {
+                        perror("Setting limit for memeory failed");
+                        exit(1);
+                    }
+
+                    struct rlimit tLimit;
+                    rlim_t maxTime = (rlim_t)timeLimitValue;
+                    tLimit.rlim_cur = 1;
+                    tLimit.rlim_max = maxTime;
+                    if( setrlimit(RLIMIT_CPU,&tLimit) == -1 ) {
+                        perror("Setting limit for cpu time failed");
+                        exit(1);
+                    }
+
                     if(execvp(comands[0],comands) == -1){
                         printf("Error occurred while running %s command.\n",comands[0]);
                         exit(1);
                     }
-                    exit(0);
+
                 } else if(pid > 0) {
                     int status;
                     wait3(&status,0,&usage);
@@ -99,7 +111,7 @@ int main(int argc, char **argv) {
                         fprintf(stderr,"Failed, wstatus = %i\n",status);
                         exit(1);
                     } else {
-                        printf("\nTimes : system = %i , users = %i\n",
+                        printf("\nTimes : system = %li , users = %li\n",
                                usage.ru_stime.tv_usec,
                                usage.ru_utime.tv_usec);
                     }
