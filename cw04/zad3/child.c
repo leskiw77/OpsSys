@@ -30,18 +30,19 @@ void resendRTSignals(int signum) {
     pid_t ppid = getppid();
     for (int i = 0; i < counter; i++) {
         if ((kill(ppid, SIGRTMIN)) != 0) {
-            printf("\nChild : kill error\n");
+            printf("\nChild : kill SIGRTMIN error\n");
             exit(1);
         }
     }
-    if (kill(ppid, SIGRTMIN+1) != 0) {
-        printf("\nChild : kill error\n");
+    if (kill(ppid, SIGRTMIN + 1) != 0) {
+        printf("\nChild : kill SIGRTMIN+1 error\n");
         exit(1);
     }
     printf("\nChild : %d x SIGRTMIN received and resend parent\n", counter);
     printf("Child : 1 x SIGRTMIN+1 received and resend parent\n");
     exit(0);
 }
+
 
 
 int main(int argc, char **argv) {
