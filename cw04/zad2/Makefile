@@ -3,7 +3,7 @@ CFLAGS= -pedantic -Wall
 
 all : main
 
-parent : main.c
+main : main.c
 	$(CC) main.c -o main
 
 clean:

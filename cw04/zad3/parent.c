@@ -116,7 +116,7 @@ int main(int argc, char **argv) {
         sigaddset(&(sAct1.sa_mask), SIGRTMIN + 1);
 
         struct sigaction sAct2;
-        sAct2.sa_handler = exitProg;
+        sAct2.sa_handler = exitProgRT;
         sAct2.sa_flags = 0;
         sigaddset(&(sAct2.sa_mask), SIGRTMIN);
 
