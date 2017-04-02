@@ -1,124 +1,145 @@
 #include <stdio.h>
-
 #include <sys/types.h>
 #include <signal.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <time.h>
 
-int k,n,counter;
-int received = 0;
-pid_t * pidArray;
+int k,n;
+int counter=0;
+int finished = 0;
+pid_t * activePidArr;
+pid_t * allPidArr;
 
 
-void bt_sighandler(int sig, siginfo_t *info, void *secret) {
 
-    sigset_t set;
-
-    sigset_t base_mask, waiting_mask;
-
-    sigemptyset (&base_mask);
-    sigaddset (&base_mask, SIGUSR1);
-
-    sigprocmask (SIG_SETMASK, &base_mask, NULL);
-
-    sigpending (&waiting_mask);
-
-    while (sigismember (&waiting_mask, SIGUSR1)) {
-        counter++;
-
-        printf("pid=%d signal=%d\n",info->si_pid,info->si_signo);
-        printf("counder %d\n",counter);
+void finalSygnal(int sig, siginfo_t *info, void *secret) {
+    finished++;
+    printf("Finished process pid=%d signal=%d value=%d\n",info->si_pid,info->si_signo,info->si_value.sival_int);
+    if(finished == n){
+        exit(0);
     }
 
-    printf("pid=%d signal=%d\n",info->si_pid,info->si_signo);
-    printf("counder %d\n",counter);
-    /*
+}
+
+void abortChildrenProcesses(int sig){
+    for (int i = 0; i < n; ++i) {
+        kill(allPidArr[i],SIGABRT);
+    }
+    exit(2);
+}
+void income_signal_counter(int sig, siginfo_t *info, void *secret) {
+
+    counter++;
+
+    printf("Parent received signal=%d from process pid=%d \n",info->si_signo,info->si_pid);
+
     if(counter == k){
 
         for (int i = 0; i < k-1; ++i) {
-            printf("send %d\n",pidArray[i]);
-            kill(pidArray[i],SIGCONT);
+            kill(activePidArr[i],SIGCONT);
         }
         kill(info->si_pid,SIGCONT);
 
     }
-    else if(counter == n-1){
-        kill(info->si_pid,SIGCONT);
-        printf("to juz koniec\n");
-        exit(17);
-    }
     else if(counter>k){
-        printf("Bedziemy słac jedno\n");
         kill(info->si_pid,SIGCONT);
 
     }
     else{
-        printf("agregujemy\n");
-        pidArray[counter-1]=info->si_pid;
+        activePidArr[counter-1]=info->si_pid;
 
     }
     printf("\n");
-*/
+
 }
 
-
-void childP(int sig)
+void childCont(int sig)
 {
-    printf("Pid dziecka %d\n",getpid());
-
+    printf("Process %d continued\n",getpid());
 }
 
-long childProcess(){
-    printf("%d\n",getppid());
-    signal(SIGCONT,childP);
-    sleep(3);
+int childProcess(){
+
+    signal(SIGCONT,childCont);
+
+    //working
+    FILE * randFile = fopen("/dev/random", "r");
+    unsigned int randNum;
+    fread(&randNum, sizeof(unsigned int), 1, randFile);
+    fclose(randFile);
+    //sleep(randNum%10);
+
     clock_t start = clock();
     kill(getppid(),SIGUSR1);
     pause();
     clock_t end = clock();
-    printf("kontunuacja %ld \n",(long)(end-start));
-    //kill(getppid(),SIGRTMIN + rand()%(SIGRTMAX-SIGRTMIN));
-    return (long)(end-start);
+
+    union sigval value;
+    value.sival_int = end - start;
+
+    sigqueue(getppid(), SIGRTMIN + randNum%(SIGRTMAX-SIGRTMIN), value);
+    return (int)(end-start);
 }
 
-int main()
+int main(int argc, char **argv)
 {
-    srand(time(NULL));
-    counter=0;
 
-    pid_t pid;
-    n=10;k=5;
-    pidArray=(pid_t *)malloc(n*sizeof(pid_t));
+    if (argc != 3) {
+        printf("Wrong arguments\n");
+        exit(1);
+    }
+
+    n = atoi(argv[1]);
+    k = atoi(argv[2]);
+
+    if(n<=0 || k<=0 || k>n){
+        printf("Wrong arguments\n");
+        exit(1);
+    }
+
+    activePidArr=(pid_t *)malloc(n*sizeof(pid_t));
+    allPidArr=(pid_t *)malloc(n*sizeof(pid_t));
     int i;
 
-    struct sigaction sa;
 
-    sa.sa_sigaction = (void *)bt_sighandler;
-    sigemptyset (&sa.sa_mask);
-    sa.sa_flags = SA_SIGINFO;
-    sigaction(SIGUSR1, &sa, NULL);
+    struct sigaction sAct1;
+    sAct1.sa_sigaction = income_signal_counter;
+    sAct1.sa_flags = SA_SIGINFO;
+
+    struct sigaction sAct2;
+    sAct2.sa_sigaction = finalSygnal;
+    sAct2.sa_flags = SA_SIGINFO;
+
+    for (int i = SIGRTMIN; i <= SIGRTMAX ; ++i) {
+        if(sigaction(i, &sAct2, NULL) == -1){
+            printf("Parent : sigaction error\n");
+            exit(1);
+        }
+    }
+
+    if (sigaction(SIGUSR1, &sAct1, NULL) == -1 ) {
+        printf("Parent : sigaction error\n");
+        exit(1);
+    }
+
+    signal(SIGINT,abortChildrenProcesses);
+
+
 
 
     for (i = 0; i < n; ++i) {
-        if ((pid = fork()) < 0) {
-            printf("tutut");
+        if ((allPidArr[i] = fork()) < 0) {
             perror("fork");
             abort();
-        } else if (pid == 0) {
-            sleep(1);
-            printf("tak\n");
-            childProcess();
-            pause();
-            printf("dziecko\n");
-            return 1;
+        } else if (allPidArr[i] == 0) {
+            return childProcess();
         }
     }
-    printf("Dupa\n");
 
-    while(1){
-        //printf("%d %d %d\n",counter,k,n);
-        continue;
+
+    while (1) {
+        ;
     }
 
     return 0;
