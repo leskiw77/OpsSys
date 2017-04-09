@@ -18,23 +18,23 @@ void executeLine(char *line, int length) {
     }
 
     int fd[2];
-    int in = STDIN_FILENO;
+    int input = STDIN_FILENO; // read from stdin
 
     // execute n-1 commands :
     for (int i = 0; i < cmdSize - 1; i++) {
         pipe(fd);
-        execCommandInProcess(i, in, fd[PIPE_IN], commands[i]);
+        execCommandInProcess(i, input, fd[PIPE_IN], commands[i]); // exec and send result data to pipe
         close(fd[PIPE_IN]);
-        in = fd[PIPE_OUT];
+        input = fd[PIPE_OUT]; // then read from previously filled pipe
     }
 
     // execute last command :
     pid_t last = fork();
     if (last == 0) {
         // child :
-        if (in != STDIN_FILENO) {
-            dup2(in, STDIN_FILENO);
-            close(in);
+        if (input != STDIN_FILENO) {
+            dup2(input, STDIN_FILENO);
+            close(input);
         }
         // execute :
         execvp(commands[cmdSize - 1]->cmd, commands[cmdSize - 1]->argv);
@@ -50,30 +50,34 @@ void executeLine(char *line, int length) {
     free(words);
 }
 
-void execCommandInProcess(int index, int in, int out, Command *command) {
+// TO DO : check it :
+void execCommandInProcess(int index, int input, int output, Command *command) {
     if(command==NULL) {
         fprintf(stderr,"Command cannot be NULL");
         exit(1);
     }
     pid_t pid = fork();
-    // TO DO : check it :
     if (pid == 0) {
         // child :
+
+        // set pipes :
         if (index == 0) {
-            if (out != STDOUT_FILENO) {
-                dup2(out, STDOUT_FILENO);
-                close(out);
+            // if first one , set output as stdout :
+            if (output != STDOUT_FILENO) {
+                dup2(output, STDOUT_FILENO);
+                close(output);
             }
         } else {
-            if (in != STDIN_FILENO) {
-                dup2(in, STDIN_FILENO);
-                close(in);
+            if (input != STDIN_FILENO) {
+                dup2(input,STDIN_FILENO);
+                close(input);
             }
-            if (out != STDOUT_FILENO) {
-                dup2(out, STDOUT_FILENO);
-                close(out);
+            if (output != STDOUT_FILENO) {
+                dup2(output, STDOUT_FILENO);
+                close(output);
             }
         }
+        // execute command with args:
         if (execvp(command->cmd, command->argv) == -1) {
             fprintf(stderr, "Error while executing : %s\n", command->cmd);
             exit(1);

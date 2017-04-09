@@ -22,9 +22,9 @@ struct Command{
     char **argv;
 };
 
-void executeLine(char *line, int length);
-void execCommandInProcess(int index, int in, int out, Command *command);
-Command *getParsedCommand(char *statement);
-void deleteCommand(Command *cmd);
+void executeLine(char*,int);
+void execCommandInProcess(int,int,int,Command*);
+Command *getParsedCommand(char*);
+void deleteCommand(Command*);
 
 #endif //OPSSYS_COMMANDS_H
