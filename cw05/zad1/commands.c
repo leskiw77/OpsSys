@@ -29,8 +29,8 @@ void executeLine(char *line, int length) {
     }
 
     // execute last command :
-    pid_t last = fork();
-    if (last == 0) {
+    pid_t proc = fork();
+    if (proc == 0) {
         // child :
         if (input != STDIN_FILENO) {
             dup2(input, STDIN_FILENO);
@@ -96,14 +96,14 @@ Command *getParsedCommand(char *statement) {
         exit(1);
     }
 
-    // get command :
+    // parse and set command :
     result->cmd = strtok(statement," \n\t");
     if (result->cmd == NULL) {
         fprintf(stderr, "%s\n","Error because of wrong statement");
         exit(1);
     }
 
-    // get args :
+    // parse and set args :
     result->argv = calloc(MAX_ARGV_LEN, sizeof(char *));
     result->argv[0] = result->cmd;
     int i = 1;
