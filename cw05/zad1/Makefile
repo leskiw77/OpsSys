@@ -1,8 +1,7 @@
 CC=gcc
 CFLAGS= -ansi -pedantic -std=c11 -Wall
 
-main : main.c
-	$(CC) main.c -o main
+all: main
 
-clean:
-	rm -f main
+main : main.h main.c
+	$(CC) main.c $(CFLAGS) -o main
