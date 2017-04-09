@@ -2,7 +2,7 @@
 
 int main(int argc, char *argv[]) {
     char *line = NULL;
-    size_t size = 0;
+    int size = 0;
     printf("Pipe interpreter\n");
     while (1) {
         // read line from stdin :

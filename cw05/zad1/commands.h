@@ -16,15 +16,14 @@
 static const int MAX_CMDS = 20;
 static const int MAX_ARGV_LEN = 5;
 
-typedef struct Command Command;
-struct Command{
+typedef struct CmdWithArgs CmdWithArgs;
+struct CmdWithArgs{
     char * cmd;
     char **argv;
 };
 
 void executeLine(char*,int);
-void execCommandInProcess(int,int,int,Command*);
-Command *getParsedCommand(char*);
-void deleteCommand(Command*);
+void execCommand(CmdWithArgs*,int,int,int);
+CmdWithArgs *getParsedCommand(char*);
 
 #endif //OPSSYS_COMMANDS_H
