@@ -24,7 +24,7 @@ struct Command{
 
 void executeLine(char *line, int length);
 void executeCmd(int index, int in, int out, Command *command);
-Command *getParsedCommand(char *line);
+Command *getParsedCommand(char *statement);
 void deleteCommand(Command *cmd);
 
 #endif //OPSSYS_COMMANDS_H

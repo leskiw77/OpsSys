@@ -80,8 +80,7 @@ void executeCmd(int index, int in, int out, Command *command) {
     }
 }
 
-//
-Command *getParsedCommand(char *line) {
+Command *getParsedCommand(char *statement) {
     Command *result = (Command*)malloc(sizeof(Command));
     if (result == NULL) {
         fprintf(stderr, "Error while allocating memory");
@@ -89,7 +88,7 @@ Command *getParsedCommand(char *line) {
     }
 
     // get command :
-    result->cmd = strtok(line," \n\t");
+    result->cmd = strtok(statement," \n\t");
     if (result->cmd == NULL) {
         fprintf(stderr, "%s\n","Error : wrong statement");
         exit(1);
@@ -98,11 +97,11 @@ Command *getParsedCommand(char *line) {
     // get args :
     result->argv = calloc(MAX_ARGV_LEN, sizeof(char *));
     result->argv[0] = result->cmd;
-    int argCount = 1;
+    int i = 1;
     char *arg;
-    while ((arg = strtok(NULL," \n\t")) != NULL && argCount < MAX_ARGV_LEN) {
-        result->argv[argCount] = arg;
-        argCount++;
+    while ((arg = strtok(NULL," \n\t")) != NULL && i < MAX_ARGV_LEN) {
+        result->argv[i] = arg;
+        i++;
     }
     return result;
 }
