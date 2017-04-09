@@ -12,48 +12,53 @@ void executeLine(char *line, int length) {
     }
 
     // parse commands (get command and argv) :
-    Command **cmdArray = calloc(MAX_CMDS, sizeof(Command *));
+    Command **commands = calloc(MAX_CMDS, sizeof(Command *));
     for (int i = 0; i < cmdSize; i++) {
-        cmdArray[i] = getParsedCommand(words[i]);
+        commands[i] = getParsedCommand(words[i]);
     }
 
-    // ? :
-    int p[2];
+    int fd[2];
     int in = STDIN_FILENO;
+
+    // execute n-1 commands :
     for (int i = 0; i < cmdSize - 1; i++) {
-        pipe(p);
-        executeCmd(i, in, p[PIPE_IN], cmdArray[i]);
-        close(p[PIPE_IN]);
-        in = p[PIPE_OUT];
+        pipe(fd);
+        execCommandInProcess(i, in, fd[PIPE_IN], commands[i]);
+        close(fd[PIPE_IN]);
+        in = fd[PIPE_OUT];
     }
 
+    // execute last command :
     pid_t last = fork();
     if (last == 0) {
+        // child :
         if (in != STDIN_FILENO) {
             dup2(in, STDIN_FILENO);
             close(in);
         }
-        execvp(cmdArray[cmdSize - 1]->cmd, cmdArray[cmdSize - 1]->argv);
+        // execute :
+        execvp(commands[cmdSize - 1]->cmd, commands[cmdSize - 1]->argv);
     } else {
+        // parent :
         int status;
         wait(&status);
     }
 
     for (int i = 0; i < cmdSize; i++)
-        deleteCommand(cmdArray[i]);
-    free(cmdArray);
+        deleteCommand(commands[i]);
+    free(commands);
     free(words);
 }
 
-// ? :
-void executeCmd(int index, int in, int out, Command *command) {
+void execCommandInProcess(int index, int in, int out, Command *command) {
     if(command==NULL) {
-        fprintf(stderr,"Command cannot be NULL!!");
+        fprintf(stderr,"Command cannot be NULL");
         exit(1);
     }
     pid_t pid = fork();
+    // TO DO : check it :
     if (pid == 0) {
-        // proces potomny :
+        // child :
         if (index == 0) {
             if (out != STDOUT_FILENO) {
                 dup2(out, STDOUT_FILENO);
@@ -74,7 +79,7 @@ void executeCmd(int index, int in, int out, Command *command) {
             exit(1);
         }
     } else {
-        // proces macierzysty :
+        // parent :
         int status;
         wait(&status);
     }
@@ -90,7 +95,7 @@ Command *getParsedCommand(char *statement) {
     // get command :
     result->cmd = strtok(statement," \n\t");
     if (result->cmd == NULL) {
-        fprintf(stderr, "%s\n","Error : wrong statement");
+        fprintf(stderr, "%s\n","Error because of wrong statement");
         exit(1);
     }
 
