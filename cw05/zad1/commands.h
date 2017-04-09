@@ -15,8 +15,6 @@
 
 static const int MAX_CMDS = 20;
 static const int MAX_ARGV_LEN = 5;
-static const char *WSPACE_DELIMITER = " \n\t";
-static const char *ERROR_INVALID_PIPE = "Wrong statement";
 
 typedef struct Command Command;
 struct Command{
@@ -27,7 +25,6 @@ struct Command{
 void executeLine(char *line, int length);
 void executeCmd(int index, int in, int out, Command *command);
 Command *getParsedCommand(char *line);
-Command *newCommand();
 void deleteCommand(Command *cmd);
 
 #endif //OPSSYS_COMMANDS_H

@@ -45,6 +45,7 @@ void executeLine(char *line, int length) {
     free(words);
 }
 
+// ? :
 void executeCmd(int index, int in, int out, Command *command) {
     if(command==NULL) {
         fprintf(stderr,"Command cannot be NULL!!");
@@ -69,7 +70,7 @@ void executeCmd(int index, int in, int out, Command *command) {
             }
         }
         if (execvp(command->cmd, command->argv) == -1) {
-            fprintf(stderr, "Error while executing : %s ,args : %s\n", command->cmd, strerror(errno));
+            fprintf(stderr, "Error while executing : %s\n", command->cmd);
             exit(1);
         }
     } else {
@@ -79,32 +80,31 @@ void executeCmd(int index, int in, int out, Command *command) {
     }
 }
 
+//
 Command *getParsedCommand(char *line) {
-    Command *cmd = newCommand();
-    cmd->cmd = strtok(line, WSPACE_DELIMITER);
-    if (cmd->cmd == NULL) {
-        fprintf(stderr, "%s\n", ERROR_INVALID_PIPE);
-        exit(1);
-    }
-
-    int argCount = 1;
-    char *arg;
-    cmd->argv = calloc(MAX_ARGV_LEN, sizeof(char *));
-    cmd->argv[0] = cmd->cmd;
-    while ((arg = strtok(NULL, WSPACE_DELIMITER)) != NULL && argCount < MAX_ARGV_LEN) {
-        cmd->argv[argCount++] = arg;
-    }
-
-    return cmd;
-}
-
-Command *newCommand() {
-    Command * newCommand = (Command*)malloc(sizeof(Command));
-    if (newCommand == NULL) {
+    Command *result = (Command*)malloc(sizeof(Command));
+    if (result == NULL) {
         fprintf(stderr, "Error while allocating memory");
         exit(1);
     }
-    return newCommand;
+
+    // get command :
+    result->cmd = strtok(line," \n\t");
+    if (result->cmd == NULL) {
+        fprintf(stderr, "%s\n","Error : wrong statement");
+        exit(1);
+    }
+
+    // get args :
+    result->argv = calloc(MAX_ARGV_LEN, sizeof(char *));
+    result->argv[0] = result->cmd;
+    int argCount = 1;
+    char *arg;
+    while ((arg = strtok(NULL," \n\t")) != NULL && argCount < MAX_ARGV_LEN) {
+        result->argv[argCount] = arg;
+        argCount++;
+    }
+    return result;
 }
 
 void deleteCommand(Command *cmd) {
