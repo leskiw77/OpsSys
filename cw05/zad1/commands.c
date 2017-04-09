@@ -14,7 +14,7 @@ void executeLine(char *line, int length) {
     // parse commands (get command and argv) :
     Command **cmdArray = calloc(MAX_CMDS, sizeof(Command *));
     for (int i = 0; i < cmdSize; i++) {
-        cmdArray[i] = parseCommand(words[i]);
+        cmdArray[i] = getParsedCommand(words[i]);
     }
 
     // ? :
@@ -46,13 +46,13 @@ void executeLine(char *line, int length) {
 }
 
 void executeCmd(int index, int in, int out, Command *command) {
-    //assert(command != NULL);
     if(command==NULL) {
         fprintf(stderr,"Command cannot be NULL!!");
         exit(1);
     }
     pid_t pid = fork();
     if (pid == 0) {
+        // proces potomny :
         if (index == 0) {
             if (out != STDOUT_FILENO) {
                 dup2(out, STDOUT_FILENO);
@@ -72,14 +72,14 @@ void executeCmd(int index, int in, int out, Command *command) {
             fprintf(stderr, "Error while executing : %s ,args : %s\n", command->cmd, strerror(errno));
             exit(1);
         }
-
     } else {
+        // proces macierzysty :
         int status;
         wait(&status);
     }
 }
 
-Command *parseCommand(char *line) {
+Command *getParsedCommand(char *line) {
     Command *cmd = newCommand();
     cmd->cmd = strtok(line, WSPACE_DELIMITER);
     if (cmd->cmd == NULL) {

@@ -26,7 +26,7 @@ struct Command{
 
 void executeLine(char *line, int length);
 void executeCmd(int index, int in, int out, Command *command);
-Command *parseCommand(char *line);
+Command *getParsedCommand(char *line);
 Command *newCommand();
 void deleteCommand(Command *cmd);
 
