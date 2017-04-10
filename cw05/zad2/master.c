@@ -10,8 +10,6 @@
 #include <ctype.h>
 
 
-#define LIMIT 10000000
-
 int mapDoubleToInt(int maxInt, double minDouble, double maxDouble, double val ){
     val -= minDouble;
     return (int)((val*(double)maxInt)/(maxDouble - minDouble));
@@ -92,7 +90,7 @@ int main(int argc, char *argv[]) {
         printf("Created\n");
     }
 
-    int filedesc = open(pathname, O_RDWR);
+    int filedesc = open(pathname,  O_RDONLY | O_NONBLOCK);
     if ( filedesc < 0) {
 
         exit(-1);
@@ -101,25 +99,46 @@ int main(int argc, char *argv[]) {
     char buf[50];
 
     int nread;
-    int lll=0;
+    int flag=0;
+    int l;
     while(1) {
-        if((nread = read(filedesc, buf, sizeof(buf))) > 0) {
 
-            double x,y;
+        nread = read(filedesc, buf, sizeof(buf));
+
+        if(nread >0) {
+            l++;
+            if(l%1000 == 0){
+                printf("working %d\n",l);
+            }
+
+            double x, y;
             int v;
+            valuesFromString(buf, &x, &y, &v);
 
-            valuesFromString(buf,&x,&y,&v);
+            T[mapDoubleToInt(R, -2, 1, x)][mapDoubleToInt(R, -1, 1, y)] = v;
 
-            T[mapDoubleToInt(R,-2,1,x)][mapDoubleToInt(R,-1,1,y)] = v;
+            flag = 1;
+        } else{
+            if(flag == 0){
+                printf("wait\n");
+                sleep(1);
+                continue;
+            }
+            else if(flag == 1){ //czytalismy juz, dajemy czas slaveom
+                printf("wait for data\n");
+                sleep(1);
+                flag=2;
+            } else{
+                break;
+            }
+
 
         }
-        lll++;
-        if(lll==LIMIT) break;
     }
 
+    printf("Received %d data blocks ",l);
 
     drowGnuplot(T,R);
-
 
 
     for (int i = 0; i < R; ++i) {
