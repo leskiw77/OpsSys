@@ -21,7 +21,7 @@ void executeLine(char *line, int length) {
     int input;//= STDIN_FILENO; // read from stdin
 
     // execute n-1 commands :
-    for (int i = 0; i < cmdSize - 1; i++) {
+    for (int i = 0; i < cmdSize ; i++) {
         pipe(fd);
         execCommand(commands[i], input, fd[PIPE_IN]); // exec and send result data to pipe
         close(fd[PIPE_IN]);
@@ -32,8 +32,7 @@ void executeLine(char *line, int length) {
     pid_t proc = fork();
     if (proc == 0) {  // child :
         dup2(input, STDIN_FILENO);
-        close(input);
-
+        //close(input);
         // execute :
         execvp(commands[cmdSize - 1]->cmd, commands[cmdSize - 1]->argv);
     } else {
