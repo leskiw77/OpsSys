@@ -47,7 +47,7 @@ int main(int argc, char *argv[]) {
     k = atoi(argv[3]);
 
 
-    printf("Trying to open %s\n", pathname);
+
 
     int filedesc = open(pathname, O_WRONLY);
     if (filedesc < 0) {
@@ -70,6 +70,8 @@ int main(int argc, char *argv[]) {
         write(filedesc, s, 50 * sizeof(char));
 
     }
+
+    printf("Finish\n");
 
     return 0;
 }
