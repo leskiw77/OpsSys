@@ -18,24 +18,21 @@ void executeLine(char *line, int length) {
     }
 
     int fd[2];
-    int input = STDIN_FILENO; // read from stdin
+    int input;//= STDIN_FILENO; // read from stdin
 
     // execute n-1 commands :
-    for (int i = 0; i < cmdSize - 1; i++) {
+    for (int i = 0; i < cmdSize ; i++) {
         pipe(fd);
-        execCommand(commands[i], i, input, fd[PIPE_IN]); // exec and send result data to pipe
+        execCommand(commands[i], input, fd[PIPE_IN]); // exec and send result data to pipe
         close(fd[PIPE_IN]);
         input = fd[PIPE_OUT]; // then read from previously filled pipe
     }
 
     // execute last command :
     pid_t proc = fork();
-    if (proc == 0) {
-        // child :
-        if (input != STDIN_FILENO) {
-            dup2(input, STDIN_FILENO);
-            close(input);
-        }
+    if (proc == 0) {  // child :
+        dup2(input, STDIN_FILENO);
+        //close(input);
         // execute :
         execvp(commands[cmdSize - 1]->cmd, commands[cmdSize - 1]->argv);
     } else {
@@ -55,7 +52,7 @@ void executeLine(char *line, int length) {
     free(words);
 }
 
-void execCommand(CmdWithArgs *command, int commandNumber, int input, int output) {
+void execCommand(CmdWithArgs *command, int input, int output) {
     if (command == NULL) {
         fprintf(stderr, "CmdWithArgs cannot be NULL");
         exit(1);
@@ -65,15 +62,8 @@ void execCommand(CmdWithArgs *command, int commandNumber, int input, int output)
         // child :
 
         // set pipes :
-        if (commandNumber > 0 && input != STDIN_FILENO) {
-            dup2(input, STDIN_FILENO);
-            close(input);
-        }
-
-        if (output != STDOUT_FILENO) {
-            dup2(output, STDOUT_FILENO);
-            close(output);
-        }
+        dup2(input, STDIN_FILENO); //close(input);
+        dup2(output, STDOUT_FILENO); //close(output);
 
         // execute command with args:
         if (execvp(command->cmd, command->argv) == -1) {

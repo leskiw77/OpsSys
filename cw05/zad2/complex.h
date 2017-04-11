@@ -1,16 +1,12 @@
-//
-// Created by jarema on 4/4/17.
-//
-
 #ifndef LOCALTEST_COMPLEX_H
 #define LOCALTEST_COMPLEX_H
 
 #include <math.h>
 
-typedef struct Complex{
+typedef struct Complex {
     double re;
     double im;
-}complex;
+} complex;
 
 double absolute(complex);
 

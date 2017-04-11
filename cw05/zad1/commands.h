@@ -23,7 +23,7 @@ struct CmdWithArgs{
 };
 
 void executeLine(char*,int);
-void execCommand(CmdWithArgs*,int,int,int);
+void execCommand(CmdWithArgs*,int,int);
 CmdWithArgs *getParsedCommand(char*);
 
 #endif //OPSSYS_COMMANDS_H

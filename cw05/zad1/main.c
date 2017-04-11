@@ -8,12 +8,12 @@ int main(int argc, char *argv[]) {
         // read line from stdin :
         printf("Command > \n");
         int readSigns = getline(&line, &size, stdin);
-        if (readSigns != -1) {
+        if (readSigns > 1) {
             executeLine(line, readSigns);
         } else {
             printf("End of interprer's work\n");
             free(line);
-            exit(0);
+            break;
         }
     }
     return 0;
