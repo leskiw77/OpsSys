@@ -90,7 +90,7 @@ int main(int argc, char *argv[]) {
         printf("Created\n");
     }
 
-    int filedesc = open(pathname,  O_RDONLY | O_NONBLOCK);
+    int filedesc = open(pathname,  O_RDONLY);
     if ( filedesc < 0) {
 
         exit(-1);
@@ -99,7 +99,6 @@ int main(int argc, char *argv[]) {
     char buf[50];
 
     int nread;
-    int flag=0;
     int l;
     while(1) {
 
@@ -117,21 +116,9 @@ int main(int argc, char *argv[]) {
 
             T[mapDoubleToInt(R, -2, 1, x)][mapDoubleToInt(R, -1, 1, y)] = v;
 
-            flag = 1;
         } else{
-            if(flag == 0){
-                printf("wait\n");
-                sleep(1);
-                continue;
-            }
-            else if(flag == 1){ //czytalismy juz, dajemy czas slaveom
-                printf("wait for data\n");
-                sleep(1);
-                flag=2;
-            } else{
-                break;
-            }
 
+            break;
 
         }
     }
