@@ -1,21 +1,5 @@
 #include "configuration.h"
 
-/*
-
-Usługa echa:
-
-Usługa czasu:
-  Po odebraniu takiego zlecenia serwer wysyła do klienta datę i godzinę w postaci łańcucha znaków.
-  Klient po odebraniu informacji wysyła ją na standardowe wyjście.
-
-Nakaz zakończenia:
-  Po odebraniu takiego zlecenia serwer zakończy działanie, jak tylko opróżni
-  się kolejka zleceń (zostaną wykonane wszystkie pozostałe zlecenia).
-  Klient nie czeka na odpowiedź.
-
- */
-
-
 // obecna kolejka :
 int queueDesc;
 
@@ -28,7 +12,7 @@ void init_clients() {
     }
 }
 
-int get_id() {
+int nextId() {
     for (int i = 0; i < MAXCLIENTS; i++) {
         if (clients[i] == -1) {
             return i;
@@ -52,6 +36,15 @@ void clean() {
     mq_unlink("/server");
 }
 
+int numberOfUsers() {
+    int result = 0;
+    for(int i=0;i<MAXCLIENTS;i++) {
+        if(clients[i] != -1) {
+            result++;
+        }
+    }
+    return result;
+}
 
 int main(int argc, char *argv[]) {
 
@@ -76,12 +69,12 @@ int main(int argc, char *argv[]) {
     printf("SERVER WORKS\n");
     while (1) {
         if (mq_receive(queueDesc, message, MAX_SIZE, 0) >= 0) {
-            printf("From client : %s\n", message + 1);
+            printf("\nFrom client : %s\n", message + 1);
             long type = message[0];
             switch (type) {
 
                 case NEW_CLIENT: {
-                    int new_id = get_id();
+                    int new_id = nextId();
                     int cl_q = -1;
                     // create new queue :
                     if (new_id != -1) {
@@ -91,7 +84,9 @@ int main(int argc, char *argv[]) {
                             new_id = -1;
                         }
                     }
-                    printf("SERVER : new client with id = %d\n", cl_q);
+                    printf("SERVER : new client with id = %d\n", new_id);
+                    printf("SERVER : now we have %d users\n", numberOfUsers());
+
                     // resend queue id to client :
                     message[0] = SERACCLIENT;
                     sprintf(message + 1, "%d", new_id);
@@ -152,7 +147,8 @@ int main(int argc, char *argv[]) {
                 case EXIT: {
                     int client_id;
                     sscanf(message + 1, "%d", &client_id);
-                    printf("Client with id = %d  has exit\n", client_id);
+                    printf("SERVER : client with id = %d  has exit\n", client_id);
+                    printf("SERVER : now we have %d users\n", numberOfUsers());
                     mq_close(clients[client_id]);
                     clients[client_id] = -1;
                     break;
