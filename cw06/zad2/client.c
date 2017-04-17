@@ -59,7 +59,21 @@ int main(int argc, char *argv[]) {
     }
     printf("Registered with id = %d\n",client_id);
 
+    char lineBuffer[MAX_SIZE];
     while (1) {
+
+        //printf("\nCommand >  ");
+        //char * line = NULL;
+        //size_t len = MAX_SIZE;
+        //int n = getline(&line, &len, stdin);
+        //sprintf(message, "%d %d %d",ECHO,client_id,1);
+        // wyslij do serwera :
+        //mq_send(server, message, MAX_SIZE, 0);
+        // odbierz odpowiedz :
+        //mq_receive(client_queue, message, MAX_SIZE, 0);
+
+
+        // it works :
         // send your id :
         message[0] = GET_ID;
         sprintf(message + 1, "%d", client_id);
@@ -69,6 +83,8 @@ int main(int argc, char *argv[]) {
         int result;
         sscanf(message + 1, "%d", &result);
         printf("From server : %d\n",result);
+
+
         //
         //int tmp;
         //sscanf(message + 1, "%d", &tmp);

@@ -122,6 +122,18 @@ int main(int argc, char *argv[]) {
                 // echo :
                 case ECHO : {
                     printf("Echo\n");
+                    int mode;
+                    int clientId;
+                    int c;
+                    //char buffer[MAX_SIZE];
+                    // odbierz od klienta :
+                    sscanf(message, "%d %d %d", &mode, &clientId, &c);
+
+                    // odeslij tekst z buffera :
+                    sprintf(message, "%d", 123);
+                    if (mq_send(clients[clientId], message, MAX_SIZE, 0) < 0) {
+                        printf("SERVER : send error");
+                    }
                     break;
                 }
 
