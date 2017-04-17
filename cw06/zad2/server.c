@@ -112,8 +112,11 @@ int main(int argc, char *argv[]) {
                 case ECHO: {
                     int clientId;
                     char buffer[MAX_SIZE];
+                    // get from client :
                     sscanf(message + 1, "%d %s", &clientId, buffer);
-                    sprintf(message + 1, "%d %s", clientId, buffer);
+
+                    // send to client :
+                    sprintf(message + 1,"%s", buffer);
                     if (mq_send(clients[clientId], message, MAX_SIZE, 0) < 0) {
                         printf("SERVER : send error");
                     }
