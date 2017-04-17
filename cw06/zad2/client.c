@@ -75,8 +75,8 @@ int main(int argc, char *argv[]) {
 
         // it works :
         // send your id :
-        message[0] = GET_ID;
-        sprintf(message + 1, "%d", client_id);
+        message[0] = ECHO;
+        sprintf(message + 1, "%d %s", client_id, "Kamil");
         mq_send(server, message, MAX_SIZE, 0);
         mq_receive(client_queue, message, MAX_SIZE, 0);
 
