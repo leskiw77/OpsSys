@@ -58,28 +58,63 @@ int main(int argc, char *argv[]) {
         printf("Not registered error");
         exit(1);
     }
-    printf("Registered with id = %d\n",client_id);
+    printf("Registered with id = %d\n", client_id);
 
     char lineBuffer[MAX_SIZE];
+
+    char echoCommand[] = {'e', 'c', 'h', 'o', (char) 10};
+    char toUpperCommand[] = {'u', 'p', 'p', 'e', 'r', (char) 10};
+    char timeCommand[] = {'t', 'i', 'm', 'e', (char) 10};
+    char exitCommand[] = {'e', 'x', 'i', 't', (char) 10};
+
+
     while (1) {
 
-        char * line = NULL;
+        char *line = NULL;
         size_t len = MAX_SIZE;
         printf("\nCommand >  ");
         int n = getline(&line, &len, stdin);
 
-        message[0] = GET_TIME;
-        sprintf(message + 1, "%d %s", client_id, line);
-        mq_send(server, message, MAX_SIZE, 0);
-        mq_receive(client_queue, message, MAX_SIZE, 0);
+        if (strcmp(line, echoCommand) == 0 || strcmp(line, toUpperCommand) == 0) {
 
-        char buffer[MAX_SIZE];
-        int year,month,day,hour,min,sec;
-        sscanf(message + 1, "%d-%d-%d %d:%d:%d", &year,&month,&day,&hour,&min,&sec);
-        printf("From server : %d.%d.%d  %d:%d:%d\n",day,month,year,hour,min,sec);
+            if (strcmp(line, echoCommand) == 0) {
+                message[0] = ECHO;
+            } else {
+                message[0] = TO_UPPER_CASE;
+            }
 
-        //printf("From server : %s\n", buffer);
+            printf("\nLine >  ");
+            int n = getline(&line, &len, stdin);
 
+            sprintf(message + 1, "%d %s", client_id, line);
+            mq_send(server, message, MAX_SIZE, 0);
+            mq_receive(client_queue, message, MAX_SIZE, 0);
+
+            char buffer[MAX_SIZE];
+            sscanf(message + 1, "%s", buffer);
+            printf("From server : %s\n", buffer);
+
+        } else if (strcmp(line, timeCommand) == 0) {
+
+            message[0] = GET_TIME;
+            sprintf(message + 1, "%d %s", client_id, line);
+            mq_send(server, message, MAX_SIZE, 0);
+            mq_receive(client_queue, message, MAX_SIZE, 0);
+
+            char buffer[MAX_SIZE];
+            int year, month, day, hour, min, sec;
+            sscanf(message + 1, "%d-%d-%d %d:%d:%d", &year, &month, &day, &hour, &min, &sec);
+            printf("From server : %d.%d.%d  %d:%d:%d\n", day, month, year, hour, min, sec);
+
+
+        } else if (strcmp(line, exitCommand) == 0) {
+
+            clean();
+            return 0;
+
+        } else {
+            printf("Komenda %s nieznana\n", line);
+        }
         sleep(1);
     }
 }
