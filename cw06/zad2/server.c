@@ -76,10 +76,10 @@ int main(int argc, char *argv[]) {
     printf("SERVER WORKS\n");
     while (1) {
         if (mq_receive(queueDesc, message, MAX_SIZE, 0) >= 0) {
-            printf("From client : %s\n",message+1);
+            printf("From client : %s\n", message + 1);
             long type = message[0];
             switch (type) {
-                // nowy klient :
+
                 case NEW_CLIENT: {
                     int new_id = get_id();
                     int cl_q = -1;
@@ -91,7 +91,7 @@ int main(int argc, char *argv[]) {
                             new_id = -1;
                         }
                     }
-                    printf("SERVER : new client with id = %d\n",cl_q);
+                    printf("SERVER : new client with id = %d\n", cl_q);
                     // resend queue id to client :
                     message[0] = SERACCLIENT;
                     sprintf(message + 1, "%d", new_id);
@@ -101,6 +101,7 @@ int main(int argc, char *argv[]) {
                     }
                     break;
                 }
+
                 case ECHO: {
                     int clientId;
                     char buffer[MAX_SIZE];
@@ -108,14 +109,13 @@ int main(int argc, char *argv[]) {
                     sscanf(message + 1, "%d %s", &clientId, buffer);
 
                     // send to client :
-                    sprintf(message + 1,"%s", buffer);
+                    sprintf(message + 1, "%s", buffer);
                     if (mq_send(clients[clientId], message, MAX_SIZE, 0) < 0) {
                         printf("SERVER : send error");
                     }
                     break;
                 }
 
-                // echo + to upper case
                 case TO_UPPER_CASE : {
                     int clientId;
                     char buffer[MAX_SIZE];
@@ -123,10 +123,26 @@ int main(int argc, char *argv[]) {
                     sscanf(message + 1, "%d %s", &clientId, buffer);
 
                     // send to client :
-                    for(int i=0;i<MAX_SIZE;i++) {
+                    for (int i = 0; i < MAX_SIZE; i++) {
                         buffer[i] = toupper(buffer[i]);
                     }
-                    sprintf(message + 1,"%s", buffer);
+                    sprintf(message + 1, "%s", buffer);
+                    if (mq_send(clients[clientId], message, MAX_SIZE, 0) < 0) {
+                        printf("SERVER : send error");
+                    }
+                    break;
+                }
+
+                case GET_TIME : {
+                    int clientId;
+                    char buffer[MAX_SIZE];
+                    struct tm * tInfo;
+                    time_t my_time;
+                    sscanf(message + 1, "%d %s", &clientId, buffer);
+                    time (&my_time);
+                    tInfo = localtime(&my_time);
+                    sprintf(message + 1, "%d-%d-%d  %d:%d:%d", 1900+(tInfo->tm_year),
+                            tInfo->tm_mon,tInfo->tm_mday,tInfo->tm_hour,tInfo->tm_min,tInfo->tm_sec);
                     if (mq_send(clients[clientId], message, MAX_SIZE, 0) < 0) {
                         printf("SERVER : send error");
                     }
@@ -136,49 +152,15 @@ int main(int argc, char *argv[]) {
                 case EXIT: {
                     int client_id;
                     sscanf(message + 1, "%d", &client_id);
-                    printf("Client with id = %d  has exit\n",client_id);
+                    printf("Client with id = %d  has exit\n", client_id);
                     mq_close(clients[client_id]);
                     clients[client_id] = -1;
-                    break;
-                }
-
-                // time :
-                case GET_TIME : {
-                    printf("Gettime\n");
-                    break;
-                }
-
-                // exit :
-                case EXIT : {
-                    printf("Close client\n");
                     break;
                 }
 
                 default: {
                     break;
                 }
-                 /*
-                case CLRESP: {
-                    int clientid;
-                    int number;
-                    int isprime;
-                    sscanf(message + 1, "%d %d %d", &clientid, &number, &isprime);
-                    if (isprime) {
-                        printf("Liczba pierwsza: %d klient %d\n", number, clientid);
-                    }
-                    break;
-                }
-
-                case CLSCLNT: {
-                    int client_id;
-                    sscanf(message + 1, "%d", &client_id);
-                    mq_close(clients[client_id]);
-                    clients[client_id] = -1;
-                    break;
-                }
-                default:
-                    break;
-                    */
             }
         }
     }

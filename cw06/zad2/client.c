@@ -68,14 +68,17 @@ int main(int argc, char *argv[]) {
         printf("\nCommand >  ");
         int n = getline(&line, &len, stdin);
 
-        message[0] = TO_UPPER_CASE;
+        message[0] = GET_TIME;
         sprintf(message + 1, "%d %s", client_id, line);
         mq_send(server, message, MAX_SIZE, 0);
         mq_receive(client_queue, message, MAX_SIZE, 0);
 
         char buffer[MAX_SIZE];
-        sscanf(message + 1, "%s", buffer);
-        printf("From server : %s\n", buffer);
+        int year,month,day,hour,min,sec;
+        sscanf(message + 1, "%d-%d-%d %d:%d:%d", &year,&month,&day,&hour,&min,&sec);
+        printf("From server : %d.%d.%d  %d:%d:%d\n",day,month,year,hour,min,sec);
+
+        //printf("From server : %s\n", buffer);
 
         sleep(1);
     }
