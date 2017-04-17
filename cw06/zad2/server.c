@@ -113,8 +113,7 @@ int main(int argc, char *argv[]) {
                     int clientId;
                     char buffer[MAX_SIZE];
                     sscanf(message + 1, "%d %s", &clientId, buffer);
-                    printf("From client : %s",buffer);
-                    sprintf(message + 1, "%d", 123);
+                    sprintf(message + 1, "%d %s", clientId, buffer);
                     if (mq_send(clients[clientId], message, MAX_SIZE, 0) < 0) {
                         printf("SERVER : send error");
                     }

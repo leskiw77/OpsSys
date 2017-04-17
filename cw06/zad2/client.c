@@ -62,7 +62,7 @@ int main(int argc, char *argv[]) {
     char lineBuffer[MAX_SIZE];
     while (1) {
 
-        //printf("\nCommand >  ");
+        //
         //char * line = NULL;
         //size_t len = MAX_SIZE;
         //int n = getline(&line, &len, stdin);
@@ -75,14 +75,19 @@ int main(int argc, char *argv[]) {
 
         // it works :
         // send your id :
+        char * line = NULL;
+        size_t len = MAX_SIZE;
+        printf("\nCommand >  ");
+        int n = getline(&line, &len, stdin);
         message[0] = ECHO;
-        sprintf(message + 1, "%d %s", client_id, "Kamil");
+        sprintf(message + 1, "%d %s", client_id, line);
         mq_send(server, message, MAX_SIZE, 0);
         mq_receive(client_queue, message, MAX_SIZE, 0);
 
         int result;
-        sscanf(message + 1, "%d", &result);
-        printf("From server : %d\n",result);
+        char buffer[MAX_SIZE];
+        sscanf(message + 1, "%d %s", &result, buffer);
+        printf("From server : %d  %s\n",result,buffer);
 
 
         //
