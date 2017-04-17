@@ -13,6 +13,7 @@
 #include <stdbool.h>
 #include <time.h>
 #include <string.h>
+#include <ctype.h>
 
 int is_prime(int n) {
     if (n == 2 || n == 3 || n == 5)
@@ -37,7 +38,6 @@ int is_prime(int n) {
 #define SERACCLIENT 2
 #define CLRESP 3
 #define GET_ID 4
-#define CLSCLNT 5
 
 #define NEW_CLIENT 6
 #define ECHO 7

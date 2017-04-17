@@ -1,16 +1,19 @@
 #include "configuration.h"
 
+int client_id = -1;
 int server;
 int client_queue;
 char queue_name[30];
 
 void handler(int sig) {
+    printf("Server stopped\n");
     exit(0);
 }
 
 void clean() {
     char message[MAX_SIZE];
-    message[0] = CLSCLNT;
+    message[0] = EXIT;
+    sprintf(message + 1, "%d", client_id);
     mq_send(server, message, MAX_SIZE, 0);
     mq_close(server);
     mq_close(client_queue);
@@ -37,7 +40,6 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
 
-
     // wysłanie informacji do serwera o dołaczeniu klienta :
     char message[MAX_SIZE];
     message[0] = NEW_CLIENT;
@@ -50,9 +52,8 @@ int main(int argc, char *argv[]) {
         printf("Receiving first message error\n");
         exit(1);
     }
-    int client_id;
+
     sscanf(message + 1, "%d", &client_id);
-    printf("Client id : %d\n", client_id);
     if (client_id == -1) {
         printf("Not registered error");
         exit(1);
@@ -62,13 +63,12 @@ int main(int argc, char *argv[]) {
     char lineBuffer[MAX_SIZE];
     while (1) {
 
-        // it works :
-        // send your id :
         char * line = NULL;
         size_t len = MAX_SIZE;
         printf("\nCommand >  ");
         int n = getline(&line, &len, stdin);
-        message[0] = ECHO;
+
+        message[0] = TO_UPPER_CASE;
         sprintf(message + 1, "%d %s", client_id, line);
         mq_send(server, message, MAX_SIZE, 0);
         mq_receive(client_queue, message, MAX_SIZE, 0);

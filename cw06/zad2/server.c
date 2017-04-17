@@ -3,14 +3,6 @@
 /*
 
 Usługa echa:
- Klient wysyła ciąg znaków.
- Serwer odsyła ten sam ciąg z powrotem.
- Klient po odebraniu wysyła go na standardowe wyjście.
-
-Usługa wersalików:
-  Klient wysyła ciąg znaków.
-  Serwer zamienia małe litery na duże i odsyła zmieniony ciąg z powrotem.
-  Klient po odebraniu wysyła go na standardowe wyjście.
 
 Usługa czasu:
   Po odebraniu takiego zlecenia serwer wysyła do klienta datę i godzinę w postaci łańcucha znaków.
@@ -84,7 +76,7 @@ int main(int argc, char *argv[]) {
     printf("SERVER WORKS\n");
     while (1) {
         if (mq_receive(queueDesc, message, MAX_SIZE, 0) >= 0) {
-            printf("From client : %s\n",message);
+            printf("From client : %s\n",message+1);
             long type = message[0];
             switch (type) {
                 // nowy klient :
@@ -125,7 +117,28 @@ int main(int argc, char *argv[]) {
 
                 // echo + to upper case
                 case TO_UPPER_CASE : {
-                    printf("To upper case\n");
+                    int clientId;
+                    char buffer[MAX_SIZE];
+                    // get from client :
+                    sscanf(message + 1, "%d %s", &clientId, buffer);
+
+                    // send to client :
+                    for(int i=0;i<MAX_SIZE;i++) {
+                        buffer[i] = toupper(buffer[i]);
+                    }
+                    sprintf(message + 1,"%s", buffer);
+                    if (mq_send(clients[clientId], message, MAX_SIZE, 0) < 0) {
+                        printf("SERVER : send error");
+                    }
+                    break;
+                }
+
+                case EXIT: {
+                    int client_id;
+                    sscanf(message + 1, "%d", &client_id);
+                    printf("Client with id = %d  has exit\n",client_id);
+                    mq_close(clients[client_id]);
+                    clients[client_id] = -1;
                     break;
                 }
 
