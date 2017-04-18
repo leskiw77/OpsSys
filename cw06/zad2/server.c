@@ -12,7 +12,7 @@ int nextId();
 void exitHandler(int sig);
 void clean();
 int numberOfUsers();
-void sendFromBufferToClient(int type, int queueId);
+void sendFromBufferToClient(int queueId);
 
 /***********************************************/
 
@@ -59,7 +59,7 @@ int main(int argc, char *argv[]) {
 
                     // resend queue id to client :
                     sprintf(message + 1, "%d", newId);
-                    sendFromBufferToClient(TEXT,clQueue);
+                    sendFromBufferToClient(clQueue);
                     break;
                 }
 
@@ -71,7 +71,7 @@ int main(int argc, char *argv[]) {
 
                     // send to client :
                     sprintf(message + 1, "%s", buffer);
-                    sendFromBufferToClient(TEXT,clients[clientId]);
+                    sendFromBufferToClient(clients[clientId]);
                     break;
                 }
 
@@ -87,7 +87,7 @@ int main(int argc, char *argv[]) {
 
                     // send to client :
                     sprintf(message + 1, "%s", buffer);
-                    sendFromBufferToClient(TEXT,clients[clientId]);
+                    sendFromBufferToClient(clients[clientId]);
                     break;
                 }
 
@@ -102,7 +102,7 @@ int main(int argc, char *argv[]) {
 
                     sprintf(message + 1, "%d-%d-%d  %d:%d:%d", 1900+(tInfo->tm_year),
                             tInfo->tm_mon,tInfo->tm_mday,tInfo->tm_hour,tInfo->tm_min,tInfo->tm_sec);
-                    sendFromBufferToClient(TEXT,clients[clientId]);
+                    sendFromBufferToClient(clients[clientId]);
                     break;
                 }
 
@@ -165,8 +165,8 @@ int numberOfUsers() {
 }
 
 
-void sendFromBufferToClient(int type, int queueId) {
-    message[0] = type;
+void sendFromBufferToClient(int queueId) {
+    message[0] = TEXT;
     if (mq_send(queueId, message, MAX_SIZE, 0)) {
         printf("SERVER : send error");
         exit(1);
