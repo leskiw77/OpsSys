@@ -29,12 +29,11 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
 
-    // wysłanie informacji do serwera o dołaczeniu klienta :
-    //message[0] = NEW_CLIENT;
+    // registration request :
     strcpy(message + 1, queue_name);
-    //mq_send(server, message, MAX_SIZE, 0);
     sendFromBufferToServer(NEW_CLIENT);
 
+    // response :
     mq_receive(client_queue, message, MAX_SIZE, 0);
     sscanf(message + 1, "%d", &client_id);
     if (client_id == -1) {
@@ -50,7 +49,6 @@ int main(int argc, char *argv[]) {
     char timeCommand[] = {'t', 'i', 'm', 'e', (char) 10};
     char exitCommand[] = {'e', 'x', 'i', 't', (char) 10};
 
-
     while (1) {
 
         char *cmd = NULL;
@@ -62,8 +60,8 @@ int main(int argc, char *argv[]) {
 
             char *line = NULL;
             printf("\nLine >  ");
-            getline(&line, &len, stdin);
 
+            getline(&line, &len, stdin);
             sprintf(message + 1, "%d %s", client_id, line);
 
             if (strcmp(cmd, echoCommand) == 0) {
@@ -84,12 +82,10 @@ int main(int argc, char *argv[]) {
 
         } else if (strcmp(cmd, timeCommand) == 0) {
 
-            //message[0] = GET_TIME;
             sprintf(message + 1, "%d %s", client_id);
             sendFromBufferToServer(GET_TIME);
-            //mq_send(server, message, MAX_SIZE, 0);
-            mq_receive(client_queue, message, MAX_SIZE, 0);
 
+            mq_receive(client_queue, message, MAX_SIZE, 0);
             int year, month, day, hour, min, sec;
             sscanf(message + 1, "%d-%d-%d %d:%d:%d", &year, &month, &day, &hour, &min, &sec);
             printf("From server : %d%d.%d%d.%d  %d%d:%d%d:%d%d\n", day / 10, day % 10, month / 10,
