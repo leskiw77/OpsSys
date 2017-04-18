@@ -93,10 +93,10 @@ int main(int argc, char *argv[]) {
 
                 case GET_TIME : {
                     int clientId;
-                    char buffer[MAX_SIZE];
+                    //char buffer[MAX_SIZE];
                     struct tm * tInfo;
                     time_t my_time;
-                    sscanf(message + 1, "%d %s", &clientId, buffer);
+                    sscanf(message + 1, "%d %s", &clientId);
                     time (&my_time);
                     tInfo = localtime(&my_time);
 
