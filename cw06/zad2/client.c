@@ -6,6 +6,7 @@ int client_queue;
 char queue_name[30];
 char message[MAX_SIZE+1];
 
+void sendFromBufferToServer(int type);
 void exitHandler(int sig);
 void clean();
 
@@ -42,8 +43,6 @@ int main(int argc, char *argv[]) {
     }
     printf("Registered with id = %d\n", client_id);
 
-    char lineBuffer[MAX_SIZE];
-
     char echoCommand[] = {'e', 'c', 'h', 'o', (char) 10};
     char toUpperCommand[] = {'u', 'p', 'p', 'e', 'r', (char) 10};
     char timeCommand[] = {'t', 'i', 'm', 'e', (char) 10};
@@ -64,25 +63,22 @@ int main(int argc, char *argv[]) {
             getline(&line, &len, stdin);
             sprintf(message + 1, "%d %s", client_id, line);
 
+
             if (strcmp(cmd, echoCommand) == 0) {
-                message[0] = ECHO;
+                sendFromBufferToServer(ECHO);
             } else if (strcmp(cmd, toUpperCommand) == 0) {
-                message[0] = TO_UPPER_CASE;
+                sendFromBufferToServer(TO_UPPER_CASE);
             } else {
                 printf("Read line error\n : %s\n",line);
                 exit(1);
             }
 
-            mq_send(server, message, MAX_SIZE, 0);
             mq_receive(client_queue, message, MAX_SIZE, 0);
-
-            char buffer[MAX_SIZE];
-            sscanf(message + 1, "%s", buffer);
-            printf("From server : %s\n", buffer);
+            printf("From server : %s\n", message+1);
 
         } else if (strcmp(cmd, timeCommand) == 0) {
 
-            sprintf(message + 1, "%d %s", client_id);
+            sprintf(message + 1, "%d", client_id);
             sendFromBufferToServer(GET_TIME);
 
             mq_receive(client_queue, message, MAX_SIZE, 0);

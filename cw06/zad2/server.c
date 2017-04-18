@@ -43,23 +43,23 @@ int main(int argc, char *argv[]) {
             switch (type) {
 
                 case NEW_CLIENT: {
-                    int new_id = nextId();
-                    int cl_q = -1;
+                    int newId = nextId();
+                    int clQueue = -1;
 
                     // create new queue :
-                    if (new_id != -1) {
-                        cl_q = mq_open(message + 1, O_WRONLY, 0, &attr);
-                        clients[new_id] = cl_q;
-                        if (cl_q == -1) {
-                            new_id = -1;
+                    if (newId != -1) {
+                        clQueue = mq_open(message + 1, O_WRONLY, 0, &attr);
+                        clients[newId] = clQueue;
+                        if (clQueue == -1) {
+                            newId = -1;
                         }
                     }
-                    printf("SERVER : new client with id = %d\n", new_id);
+                    printf("SERVER : new client with id = %d\n", newId);
                     printf("SERVER : now we have %d users\n", numberOfUsers());
 
                     // resend queue id to client :
-                    sprintf(message + 1, "%d", new_id);
-                    sendFromBufferToClient(TEXT,cl_q);
+                    sprintf(message + 1, "%d", newId);
+                    sendFromBufferToClient(TEXT,clQueue);
                     break;
                 }
 
