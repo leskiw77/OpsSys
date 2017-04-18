@@ -1,50 +1,20 @@
 #include "configuration.h"
 
-// obecna kolejka :
-int queueDesc;
 
-// lista klientow :
-static int clients[MAXCLIENTS];
+int queueDesc;                   // obecna kolejka
+static int clients[MAX_CLIENTS]; // lista klientow
+char message[MAX_SIZE + 1];      // bufor na wiadomosc :
 
-void init_clients() {
-    for (int i = 0; i < MAXCLIENTS; i++) {
-        clients[i] = -1;
-    }
-}
+/***********************************************/
 
-int nextId() {
-    for (int i = 0; i < MAXCLIENTS; i++) {
-        if (clients[i] == -1) {
-            return i;
-        }
-    }
-    return -1;
-}
+void init_clients();
+int nextId();
+void handler(int sig);
+void clean();
+int numberOfUsers();
+void sendFromBuffer(int type, int queueId);
 
-void handler(int sig) {
-    exit(0);
-}
-
-
-void clean() {
-    for (int i = 0; i < MAXCLIENTS; i++) {
-        if (clients[i] != -1) {
-            mq_close(clients[i]);
-        }
-    }
-    mq_close(queueDesc);
-    mq_unlink("/server");
-}
-
-int numberOfUsers() {
-    int result = 0;
-    for(int i=0;i<MAXCLIENTS;i++) {
-        if(clients[i] != -1) {
-            result++;
-        }
-    }
-    return result;
-}
+/***********************************************/
 
 int main(int argc, char *argv[]) {
 
@@ -53,7 +23,6 @@ int main(int argc, char *argv[]) {
     attr.mq_maxmsg = 10;
     attr.mq_msgsize = MAX_SIZE;
     attr.mq_curmsgs = 1;
-    char message[MAX_SIZE + 1];
 
     // open queue :
     queueDesc = mq_open("/server", O_CREAT | O_RDONLY, S_IRUSR | S_IWUSR, &attr);
@@ -76,6 +45,7 @@ int main(int argc, char *argv[]) {
                 case NEW_CLIENT: {
                     int new_id = nextId();
                     int cl_q = -1;
+
                     // create new queue :
                     if (new_id != -1) {
                         cl_q = mq_open(message + 1, O_WRONLY, 0, &attr);
@@ -88,12 +58,8 @@ int main(int argc, char *argv[]) {
                     printf("SERVER : now we have %d users\n", numberOfUsers());
 
                     // resend queue id to client :
-                    message[0] = SERACCLIENT;
                     sprintf(message + 1, "%d", new_id);
-                    if (mq_send(cl_q, message, MAX_SIZE, 0)) {
-                        printf("SERVER : send error");
-                        exit(1);
-                    }
+                    sendFromBuffer(SERACCLIENT,cl_q);
                     break;
                 }
 
@@ -105,9 +71,10 @@ int main(int argc, char *argv[]) {
 
                     // send to client :
                     sprintf(message + 1, "%s", buffer);
-                    if (mq_send(clients[clientId], message, MAX_SIZE, 0) < 0) {
-                        printf("SERVER : send error");
-                    }
+                    //if (mq_send(clients[clientId], message, MAX_SIZE, 0) < 0) {
+                    //    printf("SERVER : send error");
+                    //}
+                    sendFromBuffer(TEXT,clients[clientId]);
                     break;
                 }
 
@@ -122,9 +89,10 @@ int main(int argc, char *argv[]) {
                         buffer[i] = toupper(buffer[i]);
                     }
                     sprintf(message + 1, "%s", buffer);
-                    if (mq_send(clients[clientId], message, MAX_SIZE, 0) < 0) {
-                        printf("SERVER : send error");
-                    }
+                    //if (mq_send(clients[clientId], message, MAX_SIZE, 0) < 0) {
+                    //    printf("SERVER : send error");
+                    //}
+                    sendFromBuffer(TEXT,clients[clientId]);
                     break;
                 }
 
@@ -138,19 +106,20 @@ int main(int argc, char *argv[]) {
                     tInfo = localtime(&my_time);
                     sprintf(message + 1, "%d-%d-%d  %d:%d:%d", 1900+(tInfo->tm_year),
                             tInfo->tm_mon,tInfo->tm_mday,tInfo->tm_hour,tInfo->tm_min,tInfo->tm_sec);
-                    if (mq_send(clients[clientId], message, MAX_SIZE, 0) < 0) {
-                        printf("SERVER : send error");
-                    }
+                    //if (mq_send(clients[clientId], message, MAX_SIZE, 0) < 0) {
+                    //    printf("SERVER : send error");
+                    //}
+                    sendFromBuffer(TEXT,clients[clientId]);
                     break;
                 }
 
                 case EXIT: {
                     int client_id;
                     sscanf(message + 1, "%d", &client_id);
-                    printf("SERVER : client with id = %d  has exit\n", client_id);
-                    printf("SERVER : now we have %d users\n", numberOfUsers());
                     mq_close(clients[client_id]);
                     clients[client_id] = -1;
+                    printf("SERVER : client with id = %d  has exit\n", client_id);
+                    printf("SERVER : now we have %d users\n", numberOfUsers());
                     break;
                 }
 
@@ -162,3 +131,51 @@ int main(int argc, char *argv[]) {
     }
 }
 
+void init_clients() {
+    for (int i = 0; i < MAX_CLIENTS; i++) {
+        clients[i] = -1;
+    }
+}
+
+int nextId() {
+    for (int i = 0; i < MAX_CLIENTS; i++) {
+        if (clients[i] == -1) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+void handler(int sig) {
+    exit(0);
+}
+
+
+void clean() {
+    for (int i = 0; i < MAX_CLIENTS; i++) {
+        if (clients[i] != -1) {
+            mq_close(clients[i]);
+        }
+    }
+    mq_close(queueDesc);
+    mq_unlink("/server");
+}
+
+int numberOfUsers() {
+    int result = 0;
+    for(int i=0;i<MAX_CLIENTS;i++) {
+        if(clients[i] != -1) {
+            result++;
+        }
+    }
+    return result;
+}
+
+
+void sendFromBuffer(int type, int queueId) {
+    message[0] = type;
+    if (mq_send(queueId, message, MAX_SIZE, 0)) {
+        printf("SERVER : send error");
+        exit(1);
+    }
+}

@@ -16,21 +16,14 @@
 #include <ctype.h>
 
 #define MAX_SIZE 100
-#define MAXCLIENTS 10
+#define MAX_CLIENTS 10
 
-#define NEWCLNT 1
-#define SERACCLIENT 2
-#define CLRESP 3
-#define GET_ID 4
-
-#define NEW_CLIENT 6
-#define ECHO 7
-#define TO_UPPER_CASE 8
-#define GET_TIME 9
-#define EXIT 10
-
-#define MAXLENGTH 512
-#define MAXNAME 100
-#define MAXMSGSIZE 4096
+#define TEXT 0
+#define SERACCLIENT 1
+#define NEW_CLIENT 2
+#define ECHO 3
+#define TO_UPPER_CASE 4
+#define GET_TIME 5
+#define EXIT 6
 
 #endif //OPSSYS_COMMON_H
