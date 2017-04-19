@@ -92,6 +92,7 @@ int main(int argc, char *argv[]) {
             } else {
                 // send to server
                 message.mtype = 2;
+                message.mrequest = GET_TIME;
                 if (msgsnd(client, &message, MAXMSGSIZE, 0) < 0) {
                     printf("CLIENT ERROR : %s\n", strerror(errno));
                     working = 0;

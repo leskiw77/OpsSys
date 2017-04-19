@@ -75,22 +75,22 @@ int main(int argc, char *argv[]) {
                         clients[i].active = 0;
                     }
                 } else {
-                    // pobierz typ wiadomosci :
-                    /*
-                     * printf("From client : message.mtext");
-                     * int type = getFromClient();
-                     * if (type == exit) {
-                     *     wyloguj_klienta
-                     * } else if (type == ECHO) {
-                     *     odeslij wiadomosc
-                     * } else if (type == TO_UPPER) {
-                     *     odeslij to_upper
-                     * } else if (type == GET_TIME){
-                     *     odeslij czas
-                     * }
-                     */
-                    //sendEcho(&message, i);
-                    sendTime(&message, i);
+                    printf("From client : %s , request = %i\n", message.mtext,message.mrequest);
+                    switch (message.mrequest) {
+                        case EXIT:
+                            break;
+                        case ECHO:
+                            sendEcho(&message,i);
+                            break;
+                        case TO_UPPER:
+                            sendToUpper(&message,i);
+                            break;
+                        case GET_TIME:
+                            sendTime(&message, i);
+                            break;
+                        default:
+                            break;
+                    }
                 }
             }
         }
@@ -155,9 +155,9 @@ void sendTime(struct mymesg *message, int i) {
     response.mtype = 1;
     time_t tm;
     tm = time(NULL);
-    char result[MAXLENGTH];
-    sprintf(result, "\n%s<%s>  ", ctime(&tm), clients[i].name);
-    strcpy(response.mtext, result);
+    char buffer[MAXLENGTH];
+    sprintf(buffer, "\n%s<%s>  ", ctime(&tm), clients[i].name);
+    strcpy(response.mtext, buffer);
     if (clients[i].active == 1) {
         if (msgsnd(clients[i].queue, &response, MAXMSGSIZE, 0) < 0) {
             printf("msgsnd(): %d: %s\n", errno, strerror(errno));

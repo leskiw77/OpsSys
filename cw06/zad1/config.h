@@ -17,12 +17,15 @@
 #define MAXCLIENTS 30
 #define MAXMSGSIZE 4096
 
-#define ECHO 1
-#define TO_UPPER 2
-#define GET_TIME 3
+#define DEFAULT 1
+#define ECHO 2
+#define TO_UPPER 3
+#define GET_TIME 4
+#define EXIT 5
 
 struct mymesg {
     long mtype;
+    int mrequest;
     char mtext[MAXMSGSIZE];
 };
 
