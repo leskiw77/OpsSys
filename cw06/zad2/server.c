@@ -58,7 +58,7 @@ int main(int argc, char *argv[]) {
                     printf("SERVER : now we have %d users\n", numberOfUsers());
 
                     // resend queue id to client :
-                    sprintf(message + 1, "%d", newId);
+                    sprintf(message, "%d", newId);
                     sendFromBufferToClient(clQueue);
                     break;
                 }
@@ -70,7 +70,7 @@ int main(int argc, char *argv[]) {
                     sscanf(message + 1, "%d %s", &clientId, buffer);
 
                     // send to client :
-                    sprintf(message + 1, "%s", buffer);
+                    sprintf(message, "%s", buffer);
                     sendFromBufferToClient(clients[clientId]);
                     break;
                 }
@@ -86,7 +86,7 @@ int main(int argc, char *argv[]) {
                         buffer[i] = toupper(buffer[i]);
 
                     // send to client :
-                    sprintf(message + 1, "%s", buffer);
+                    sprintf(message, "%s", buffer);
                     sendFromBufferToClient(clients[clientId]);
                     break;
                 }
@@ -100,7 +100,7 @@ int main(int argc, char *argv[]) {
                     time (&my_time);
                     tInfo = localtime(&my_time);
 
-                    sprintf(message + 1, "%d-%d-%d  %d:%d:%d", 1900+(tInfo->tm_year),
+                    sprintf(message, "%d-%d-%d  %d:%d:%d", 1900+(tInfo->tm_year),
                             tInfo->tm_mon,tInfo->tm_mday,tInfo->tm_hour,tInfo->tm_min,tInfo->tm_sec);
                     sendFromBufferToClient(clients[clientId]);
                     break;
@@ -166,7 +166,6 @@ int numberOfUsers() {
 
 
 void sendFromBufferToClient(int queueId) {
-    message[0] = TEXT;
     if (mq_send(queueId, message, MAX_SIZE, 0)) {
         printf("SERVER : send error");
         exit(1);

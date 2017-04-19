@@ -1,9 +1,9 @@
 #include "configuration.h"
 
-int client_id = -1;
+int clientId = -1;
 int server;
-int client_queue;
-char queue_name[30];
+int clientQueue;
+char queueName[30];
 char message[MAX_SIZE+1];
 
 void sendFromBufferToServer(int type);
@@ -22,26 +22,26 @@ int main(int argc, char *argv[]) {
     atexit(clean);
 
     // creating queue :
-    sprintf(queue_name, "/client%d", getpid());
+    sprintf(queueName, "/client%d", getpid());
     server = mq_open("/server", O_WRONLY, 0, &attr);
-    client_queue = mq_open(queue_name, O_CREAT | O_RDONLY, S_IRUSR | S_IWUSR, &attr);
-    if (client_queue == -1 || server == -1) {
+    clientQueue = mq_open(queueName, O_CREAT | O_RDONLY, S_IRUSR | S_IWUSR, &attr);
+    if (clientQueue == -1 || server == -1) {
         printf("Client or server queue opening error");
         exit(1);
     }
 
     // registration request :
-    strcpy(message + 1, queue_name);
+    strcpy(message + 1, queueName);
     sendFromBufferToServer(NEW_CLIENT);
 
     // response :
-    mq_receive(client_queue, message, MAX_SIZE, 0);
-    sscanf(message + 1, "%d", &client_id);
-    if (client_id == -1) {
+    mq_receive(clientQueue, message, MAX_SIZE, 0);
+    sscanf(message, "%d", &clientId);
+    if (clientId == -1) {
         printf("Not registered error");
         exit(1);
     }
-    printf("Registered with id = %d\n", client_id);
+    printf("Registered with id = %d\n", clientId);
 
     char echoCommand[] = {'e', 'c', 'h', 'o', (char) 10};
     char toUpperCommand[] = {'u', 'p', 'p', 'e', 'r', (char) 10};
@@ -61,7 +61,7 @@ int main(int argc, char *argv[]) {
             printf("\nLine >  ");
 
             getline(&line, &len, stdin);
-            sprintf(message + 1, "%d %s", client_id, line);
+            sprintf(message + 1, "%d %s", clientId, line);
 
 
             if (strcmp(cmd, echoCommand) == 0) {
@@ -73,17 +73,17 @@ int main(int argc, char *argv[]) {
                 exit(1);
             }
 
-            mq_receive(client_queue, message, MAX_SIZE, 0);
-            printf("From server : %s\n", message+1);
+            mq_receive(clientQueue, message, MAX_SIZE, 0);
+            printf("From server : %s\n", message);
 
         } else if (strcmp(cmd, timeCommand) == 0) {
 
-            sprintf(message + 1, "%d", client_id);
+            sprintf(message + 1, "%d", clientId);
             sendFromBufferToServer(GET_TIME);
 
-            mq_receive(client_queue, message, MAX_SIZE, 0);
+            mq_receive(clientQueue, message, MAX_SIZE, 0);
             int year, month, day, hour, min, sec;
-            sscanf(message + 1, "%d-%d-%d %d:%d:%d", &year, &month, &day, &hour, &min, &sec);
+            sscanf(message, "%d-%d-%d %d:%d:%d", &year, &month, &day, &hour, &min, &sec);
             printf("From server : %d%d.%d%d.%d  %d%d:%d%d:%d%d\n", day / 10, day % 10, month / 10,
                    month % 10, year, hour / 10, hour % 10, min / 10, min % 10, sec / 10, sec % 10);
 
@@ -111,9 +111,9 @@ void exitHandler(int sig) {
 
 void clean() {
     message[0] = EXIT;
-    sprintf(message + 1, "%d", client_id);
+    sprintf(message + 1, "%d", clientId);
     mq_send(server, message, MAX_SIZE, 0);
     mq_close(server);
-    mq_close(client_queue);
-    mq_unlink(queue_name);
+    mq_close(clientQueue);
+    mq_unlink(queueName);
 }
