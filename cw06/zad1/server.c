@@ -7,32 +7,28 @@ struct client {
     int active;
 };
 
-//-----------------------------------------------------
 int server;
 int working;
 int numOfClients;
 struct client clients[MAXCLIENTS];
 
-//-----------------------------------------------------
 void signalHandler(int signal);
-
 int registerClient(struct mymesg *message);
-
 void sendToAll(struct mymesg *message, int i);
 
-//-----------------------------------------------------
+
 int main(int argc, char *argv[]) {
 
     working = 1;
     numOfClients = 0;
 
-    // obsluga sygnalow :
+    // setting exit signals :
     if (signal(SIGTSTP, signalHandler) == SIG_ERR) {
         printf("signal(): %d: %s\n", errno, strerror(errno));
         exit(1);
     }
 
-    // ?
+    // get server key :
     key_t serverKey;
     struct mymesg message;
 
@@ -41,32 +37,35 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
 
-    // create ser
+    // create server queue :
     if ((server = msgget(serverKey, IPC_CREAT | 0600)) < 0) {
         printf("msgget(): %d: %s\n", errno, strerror(errno));
         exit(1);
     }
 
 
-    printf("\nSerwer działa!\n");
+    printf("\nServer works\n");
     while (working) {
+        // receive from client :
         if (msgrcv(server, &message, MAXNAME, 0, IPC_NOWAIT) < 0) {
             if (errno != EAGAIN && errno != ENOMSG) {
                 printf("msgrcv(): %d: %s\n", errno, strerror(errno));
                 working = 0;
             } else if (errno == E2BIG) {
-
+                // TODO : CZEMU TU NIC NIE MA
             }
         } else {
-            if (registerClient(&message) < 0) {
+            // client's registration :
+            if (registerClient(&message) < 0)
                 printf("Nie mozna dodac klienta\n");
-            } else {
+            else
                 printf("%s zalogował się!\n", message.mtext);
-            }
         }
-        int i;
-        for (i = 0; i < numOfClients; ++i) {
+
+        for (int i = 0; i < numOfClients; i++) {
             if (clients[i].active == 1) {
+
+                // receive from clients :
                 if (msgrcv(clients[i].queue, &message, MAXMSGSIZE, 2, IPC_NOWAIT) < 0) {
                     if (errno != EAGAIN && errno != ENOMSG && errno != EINVAL) {
                         printf("msgrcv(): %d: %s\n", errno, strerror(errno));
@@ -75,7 +74,21 @@ int main(int argc, char *argv[]) {
                         clients[i].active = 0;
                     }
                 } else {
-                    sendToAll(&message, i);
+                    // pobierz typ wiadomosci :
+                    /*
+                     * printf("From client : message.mtext");
+                     * int type = getFromClient();
+                     * if (type == exit) {
+                     *     wyloguj_klienta
+                     * } else if (type == ECHO) {
+                     *     odeslij wiadomosc
+                     * } else if (type == TO_UPPER) {
+                     *     odeslij to_upper
+                     * } else if (type == GET_TIME){
+                     *     odeslij czas
+                     * }
+                     */
+                    sendEcho(&message, i);
                 }
             }
         }
@@ -90,12 +103,10 @@ int main(int argc, char *argv[]) {
     return 0;
 }
 
-//-----------------------------------------------------
 void signalHandler(int signal) {
     working = 0;
 }
 
-//-----------------------------------------------------
 int registerClient(struct mymesg *message) {
     key_t tmp;
 
@@ -116,24 +127,20 @@ int registerClient(struct mymesg *message) {
     return 0;
 }
 
-//-----------------------------------------------------
-void sendToAll(struct mymesg *message, int i) {
-    struct mymesg message2;
-    message2.mtype = 1;
-    time_t tm;
-    tm = time(NULL);
-    char result[MAXLENGTH];
-    sprintf(result, "\n%s<%s>  ", ctime(&tm), clients[i].name);
-    strcat(result, message->mtext);
-    printf("%s\n", result);
-    strcpy(message2.mtext, result);
-    int j;
-    for (j = 0; j < numOfClients; ++j) {
-        if ((j != i) && (clients[j].active == 1)) {
-            if (msgsnd(clients[j].queue, &message2, MAXMSGSIZE, 0) < 0) {
-                printf("msgsnd(): %d: %s\n", errno, strerror(errno));
-                working = 0;
-            }
+void sendEcho(struct mymesg *message, int i) {
+    struct mymesg response;
+    response.mtype = 1;
+    //time_t tm;
+    //tm = time(NULL);
+    //char result[MAXLENGTH];
+    //sprintf(result, "\n%s<%s>  ", ctime(&tm), clients[i].name);
+    //strcat(result, message->mtext);
+    //printf("%s\n", result);
+    strcpy(response.mtext, message->mtext);
+    if (clients[i].active == 1) {
+        if (msgsnd(clients[i].queue, &response, MAXMSGSIZE, 0) < 0) {
+            printf("msgsnd(): %d: %s\n", errno, strerror(errno));
+            working = 0;
         }
     }
 }
