@@ -14,8 +14,9 @@ struct client clients[MAXCLIENTS];
 
 void signalHandler(int signal);
 int registerClient(struct mymesg *message);
-void sendToAll(struct mymesg *message, int i);
-
+void sendEcho(struct mymesg *message, int i);
+void sendToUpper(struct mymesg *message, int i);
+void sendTime(struct mymesg *message, int i);
 
 int main(int argc, char *argv[]) {
 
@@ -88,18 +89,12 @@ int main(int argc, char *argv[]) {
                      *     odeslij czas
                      * }
                      */
-                    sendEcho(&message, i);
+                    //sendEcho(&message, i);
+                    sendTime(&message, i);
                 }
             }
         }
-        usleep(800000);
     }
-
-    if (msgctl(server, IPC_RMID, (struct msqid_ds *) NULL) < 0) {
-        printf("msgctl(): %d: %s\n", errno, strerror(errno));
-        exit(-1);
-    }
-
     return 0;
 }
 
@@ -130,13 +125,39 @@ int registerClient(struct mymesg *message) {
 void sendEcho(struct mymesg *message, int i) {
     struct mymesg response;
     response.mtype = 1;
-    //time_t tm;
-    //tm = time(NULL);
-    //char result[MAXLENGTH];
-    //sprintf(result, "\n%s<%s>  ", ctime(&tm), clients[i].name);
-    //strcat(result, message->mtext);
-    //printf("%s\n", result);
     strcpy(response.mtext, message->mtext);
+    if (clients[i].active == 1) {
+        if (msgsnd(clients[i].queue, &response, MAXMSGSIZE, 0) < 0) {
+            printf("msgsnd(): %d: %s\n", errno, strerror(errno));
+            working = 0;
+        }
+    }
+}
+
+void sendToUpper(struct mymesg *message, int i) {
+    struct mymesg response;
+    response.mtype = 1;
+    char buffer[MAXLENGTH];
+    for(int i=0;i<MAXLENGTH;i++) {
+        buffer[i] = toupper(message->mtext[i]);
+    }
+    strcpy(response.mtext, buffer);
+    if (clients[i].active == 1) {
+        if (msgsnd(clients[i].queue, &response, MAXMSGSIZE, 0) < 0) {
+            printf("msgsnd(): %d: %s\n", errno, strerror(errno));
+            working = 0;
+        }
+    }
+}
+
+void sendTime(struct mymesg *message, int i) {
+    struct mymesg response;
+    response.mtype = 1;
+    time_t tm;
+    tm = time(NULL);
+    char result[MAXLENGTH];
+    sprintf(result, "\n%s<%s>  ", ctime(&tm), clients[i].name);
+    strcpy(response.mtext, result);
     if (clients[i].active == 1) {
         if (msgsnd(clients[i].queue, &response, MAXMSGSIZE, 0) < 0) {
             printf("msgsnd(): %d: %s\n", errno, strerror(errno));

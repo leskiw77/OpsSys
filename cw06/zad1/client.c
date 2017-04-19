@@ -56,7 +56,6 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
 
-    printf("Do zakmniecia nacisnij: CRTL + Z\n");
     printf("\nCommand >  ");
 
     if ((child = fork()) < 0) {
@@ -72,7 +71,7 @@ int main(int argc, char *argv[]) {
                     working = 0;
                 }
             } else {
-                printf("FROM SERVER : %s\n\nCommand >  ", message.mtext);
+                printf("FROM SERVER : %s\n", message.mtext);
             }
         }
         exit(0);
