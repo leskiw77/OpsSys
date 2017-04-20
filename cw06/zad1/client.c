@@ -15,7 +15,7 @@ void registerClient();
 
 int main(int argc, char *argv[]) {
     if (argc != 2) {
-        printf("Blad w linni komend\n Poprawne uruchomienie programu to: nazwa programu [nazwa uzytkownika]\n");
+        printf("Blad w linii komend\n Poprawne uruchomienie programu to: nazwa programu [nazwa uzytkownika]\n");
         return 1;
     }
     name = argv[1];
@@ -82,11 +82,8 @@ int main(int argc, char *argv[]) {
             char *cmd = NULL;
             size_t len = MAXMSGSIZE;
             getline(&cmd, &len, stdin);
-
-            for (int i = 0; i < MAXMSGSIZE; i++)
-                message.mtext[i] = 0;
-            for (int i = 0; i < strlen(cmd) - 1; i++)
-                message.mtext[i] = cmd[i];
+            for (int i = 0; i < MAXMSGSIZE; i++) message.mtext[i] = 0;
+            for (int i = 0; i < strlen(cmd) - 1; i++) message.mtext[i] = cmd[i];
 
             if (strcmp(message.mtext, "exit") == 0) {
                 printf("Koniec\n");
@@ -102,9 +99,7 @@ int main(int argc, char *argv[]) {
                 // send to server
                 message.mtype = 2;
                 message.mrequest = ECHO;
-                char buff[MAXMSGSIZE];
-                strcpy(buff,message.mtext+5);
-                strcpy(message.mtext,buff);
+                strcpy(message.mtext,message.mtext+5);
                 if (msgsnd(client, &message, MAXMSGSIZE, 0) < 0) {
                     printf("CLIENT ERROR : %s\n", strerror(errno));
                     working = 0;
@@ -113,9 +108,7 @@ int main(int argc, char *argv[]) {
                 // send to server
                 message.mtype = 2;
                 message.mrequest = TO_UPPER;
-                char buff[MAXMSGSIZE];
-                strcpy(buff,message.mtext+6);
-                strcpy(message.mtext,buff);
+                strcpy(message.mtext,message.mtext+6);
                 if (msgsnd(client, &message, MAXMSGSIZE, 0) < 0) {
                     printf("CLIENT ERROR : %s\n", strerror(errno));
                     working = 0;
