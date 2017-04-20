@@ -10,7 +10,7 @@ key_t serverKey;
 key_t clientKey;
 
 void signalHandler(int signal);
-
+bool startsWith(char * prefix, char * text);
 void registerClient();
 
 int main(int argc, char *argv[]) {
@@ -83,16 +83,39 @@ int main(int argc, char *argv[]) {
             size_t len = MAXMSGSIZE;
             getline(&cmd, &len, stdin);
 
-            for(int i=0;i<MAXMSGSIZE;i++) message.mtext[i] = 0;
-            for(int i=0;i<strlen(cmd)-1;i++) message.mtext[i] = cmd[i];
+            for (int i = 0; i < MAXMSGSIZE; i++)
+                message.mtext[i] = 0;
+            for (int i = 0; i < strlen(cmd) - 1; i++)
+                message.mtext[i] = cmd[i];
 
             if (strcmp(message.mtext, "exit") == 0) {
                 printf("Koniec\n");
                 kill(getpid(), SIGTSTP);
-            } else {
-                // send to server
+            } else if (strcmp(message.mtext, "time") == 0) {
                 message.mtype = 2;
                 message.mrequest = GET_TIME;
+                if (msgsnd(client, &message, MAXMSGSIZE, 0) < 0) {
+                    printf("CLIENT ERROR : %s\n", strerror(errno));
+                    working = 0;
+                }
+            } else if (startsWith("echo",message.mtext)) {
+                // send to server
+                message.mtype = 2;
+                message.mrequest = ECHO;
+                char buff[MAXMSGSIZE];
+                strcpy(buff,message.mtext+5);
+                strcpy(message.mtext,buff);
+                if (msgsnd(client, &message, MAXMSGSIZE, 0) < 0) {
+                    printf("CLIENT ERROR : %s\n", strerror(errno));
+                    working = 0;
+                }
+            } else if (startsWith("upper",message.mtext)) {
+                // send to server
+                message.mtype = 2;
+                message.mrequest = TO_UPPER;
+                char buff[MAXMSGSIZE];
+                strcpy(buff,message.mtext+6);
+                strcpy(message.mtext,buff);
                 if (msgsnd(client, &message, MAXMSGSIZE, 0) < 0) {
                     printf("CLIENT ERROR : %s\n", strerror(errno));
                     working = 0;
@@ -113,4 +136,10 @@ int main(int argc, char *argv[]) {
 void signalHandler(int signal) {
     working = 0;
     kill(child, SIGTSTP);
+}
+
+bool startsWith(char * prefix, char * text) {
+    size_t lenpre = strlen(prefix),
+            lenstr = strlen(text);
+    return lenstr < lenpre ? false : strncmp(prefix, text, lenpre) == 0;
 }

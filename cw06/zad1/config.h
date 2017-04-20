@@ -11,6 +11,7 @@
 #include <sys/ipc.h>
 #include <sys/msg.h>
 #include <time.h>
+#include <stdbool.h>
 
 #define MAXLENGTH 512
 #define MAXNAME 100
