@@ -9,6 +9,7 @@ char message[MAX_SIZE+1];
 void sendFromBufferToServer(int type);
 void exitHandler(int sig);
 void clean();
+bool startsWith(char * prefix, char * text);
 
 int main(int argc, char *argv[]) {
 
@@ -55,28 +56,21 @@ int main(int argc, char *argv[]) {
         printf("\nCommand >  ");
         getline(&cmd, &len, stdin);
 
-        if (strcmp(cmd, echoCommand) == 0 || strcmp(cmd, toUpperCommand) == 0) {
+        if (startsWith("echo",cmd)) {
 
-            char *line = NULL;
-            printf("\nLine >  ");
-
-            getline(&line, &len, stdin);
-            sprintf(message + 1, "%d %s", clientId, line);
-
-
-            if (strcmp(cmd, echoCommand) == 0) {
-                sendFromBufferToServer(ECHO);
-            } else if (strcmp(cmd, toUpperCommand) == 0) {
-                sendFromBufferToServer(TO_UPPER_CASE);
-            } else {
-                printf("Read line error\n : %s\n",line);
-                exit(1);
-            }
-
+            sprintf(message + 1, "%d %s", clientId, cmd+5);
+            sendFromBufferToServer(ECHO);
             mq_receive(clientQueue, message, MAX_SIZE, 0);
             printf("From server : %s\n", message);
 
-        } else if (strcmp(cmd, timeCommand) == 0) {
+        } else if(startsWith("upper",cmd)) {
+
+            sprintf(message + 1, "%d %s", clientId, cmd+6);
+            sendFromBufferToServer(TO_UPPER_CASE);
+            mq_receive(clientQueue, message, MAX_SIZE, 0);
+            printf("From server : %s\n", message);
+
+        } else if (startsWith("time",cmd)) {
 
             sprintf(message + 1, "%d", clientId);
             sendFromBufferToServer(GET_TIME);
@@ -88,7 +82,7 @@ int main(int argc, char *argv[]) {
                    month % 10, year, hour / 10, hour % 10, min / 10, min % 10, sec / 10, sec % 10);
 
 
-        } else if (strcmp(cmd, exitCommand) == 0) {
+        } else if (startsWith("exit",cmd)) {
             break;
         } else {
             printf("Komenda %s nieznana\n", cmd);
@@ -116,4 +110,10 @@ void clean() {
     mq_close(server);
     mq_close(clientQueue);
     mq_unlink(queueName);
+}
+
+bool startsWith(char * prefix, char * text) {
+    size_t lenpre = strlen(prefix),
+            lenstr = strlen(text);
+    return lenstr < lenpre ? false : strncmp(prefix, text, lenpre) == 0;
 }
