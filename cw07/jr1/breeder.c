@@ -106,22 +106,22 @@ int main(int argc, char **argv) {
 
 void getCut(int ctsNum) {
     while (ctsCounter < ctsNum) {
-        struct sembuf buf;
-        buf.sem_num = CHECKER;
-        buf.sem_op = -1;
-        buf.sem_flg = 0;
-        if (semop(SID, &buf, 1) == -1) throwEx("Client: taking checker failed!");
+        struct sembuf sops;
+        sops.sem_num = CHECKER;
+        sops.sem_op = -1;
+        sops.sem_flg = 0;
+        if (semop(SID, &sops, 1) == -1) throwEx("Client: taking checker failed!");
 
-        buf.sem_num = FIFO;
-        if (semop(SID, &buf, 1) == -1) throwEx("Client: taking FIFO failed!");
+        sops.sem_num = FIFO;
+        if (semop(SID, &sops, 1) == -1) throwEx("Client: taking FIFO failed!");
 
         int res = takePlace();
 
-        buf.sem_op = 1;
-        if (semop(SID, &buf, 1) == -1) throwEx("Client: releasing FIFO failed!");
+        sops.sem_op = 1;
+        if (semop(SID, &sops, 1) == -1) throwEx("Client: releasing FIFO failed!");
 
-        buf.sem_num = CHECKER;
-        if (semop(SID, &buf, 1) == -1) throwEx("Client: releasing checker failed!");
+        sops.sem_num = CHECKER;
+        if (semop(SID, &sops, 1) == -1) throwEx("Client: releasing checker failed!");
 
         if (res != -1) {
             sigsuspend(&fullMask);
@@ -139,16 +139,16 @@ int takePlace() {
     pid_t myPID = getpid();
 
     if (barberStat == 0) {
-        struct sembuf buf;
-        buf.sem_num = BARBER;
-        buf.sem_op = 1;
-        buf.sem_flg = 0;
+        struct sembuf sops;
+        sops.sem_num = BARBER;
+        sops.sem_op = 1;
+        sops.sem_flg = 0;
 
-        if (semop(SID, &buf, 1) == -1) throwEx("Client: awakening barber failed!");
+        if (semop(SID, &sops, 1) == -1) throwEx("Client: awakening barber failed!");
         long timeMarker = getMicroTime();
         printf("Time: %ld, Client %d has awakened barber!\n", timeMarker, myPID);
         fflush(stdout);
-        if (semop(SID, &buf, 1) == -1) throwEx("Client: awakening barber failed!");
+        if (semop(SID, &sops, 1) == -1) throwEx("Client: awakening barber failed!");
 
         fifo->chair = myPID;
 
