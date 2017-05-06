@@ -97,13 +97,13 @@ int main(int argc, char **argv) {
 
 
     while (1) {
-        struct sembuf sops;
-        sops.sem_num = BARBER;
-        sops.sem_op = -1;
-        sops.sem_flg = 0;
+        struct sembuf buf;
+        buf.sem_num = BARBER;
+        buf.sem_op = -1;
+        buf.sem_flg = 0;
 
         //golibroda czeka na obudzenie
-        if (semop(SID, &sops, 1) == -1){
+        if (semop(SID, &buf, 1) == -1){
             return 1;
         }
 
@@ -111,35 +111,35 @@ int main(int argc, char **argv) {
         printf(" barber awaken and mad\n");
 
         //klient ktory budzi golibrode
-        pid_t toCut = inviteNew(&sops);
+        pid_t toCut = inviteNew(&buf);
         cut(toCut);
 
         while (1) {
-            sops.sem_num = FIFO;
-            sops.sem_op = -1;
-            if (semop(SID, &sops, 1) == -1){
+            buf.sem_num = FIFO;
+            buf.sem_op = -1;
+            if (semop(SID, &buf, 1) == -1){
                 return 1;
             }
             toCut = popFifo(fifo); // zajmij FIFO i pobierz pierwszego z kolejki
 
             if (toCut != -1) { // jesli istnial, to zwolnij kolejke, ostrzyz i kontynuuj
-                sops.sem_op = 1;
-                if (semop(SID, &sops, 1) == -1){
+                buf.sem_op = 1;
+                if (semop(SID, &buf, 1) == -1){
                     exit(1);
                 }
                 cut(toCut);
             } else { // jesli kolejka pusta, to ustaw, ze spisz, zwolnij kolejke i spij dalej (wyjdz z petli)
                 printTime();
                 printf(" barber fall asleep\n");
-                sops.sem_num = BARBER;
-                sops.sem_op = -1;
-                if (semop(SID, &sops, 1) == -1){
+                buf.sem_num = BARBER;
+                buf.sem_op = -1;
+                if (semop(SID, &buf, 1) == -1){
                     exit(1);
                 }
 
-                sops.sem_num = FIFO;
-                sops.sem_op = 1;
-                if (semop(SID, &sops, 1) == -1){
+                buf.sem_num = FIFO;
+                buf.sem_op = 1;
+                if (semop(SID, &buf, 1) == -1){
                     exit(1);
                 }
                 break;
@@ -150,17 +150,17 @@ int main(int argc, char **argv) {
 }
 
 
-pid_t inviteNew(struct sembuf *sops) {
-    sops->sem_num = FIFO;
-    sops->sem_op = -1;
-    if (semop(SID, sops, 1) == -1){
+pid_t inviteNew(struct sembuf *buf) {
+    buf->sem_num = FIFO;
+    buf->sem_op = -1;
+    if (semop(SID, buf, 1) == -1){
         exit(1);
     }
 
     pid_t toCut = fifo->chair;
 
-    sops->sem_op = 1;
-    if (semop(SID, sops, 1) == -1){
+    buf->sem_op = 1;
+    if (semop(SID, buf, 1) == -1){
         exit(1);
     }
 

@@ -17,185 +17,193 @@
 #include <sys/sem.h>
 #include <sys/wait.h>
 
-#include "helpers.h" // popFragment, trimWhite, getQID
+
 #include "Fifo.h"
 #include "hairdresser.h"
 
-void showUsage() {
-    printf("Use program like ./breeder.out <clientsNumber> <cutsNumber>\n");
-    exit(1);
+
+void printTime() {
+    struct timespec time;
+    if (clock_gettime(CLOCK_MONOTONIC, &time) == -1){
+        exit(1);
+    }
+    printf("Time %ld :", (long)(time.tv_nsec / 1000));
 }
 
-int validateClNum(int num) {
-    if (num < 1 || num > 500) {
-        throwEx("Wrong number of Clients!");
-        return -1;
-    } else return num;
-}
 
-int validateCtsNum(int num) {
-    if (num < 1 || num > 15) {
-        throwEx("Wrong number of Cuts!");
-        return -1;
-    } else return num;
-}
-
-void intHandler(int signo) {
-    exit(2);
-}
-
-void prepareFifo();
-
-void prepareSemafors();
 
 void prepareFullMask();
 
 void freeResources(void);
 
-int takePlace();
+int enterBarber();
 
-void getCut(int ctsNum);
+void getCut(int);
 
 key_t fifoKey;
 int shmID = -1;
 Fifo *fifo = NULL;
 int SID = -1;
 
-volatile int ctsCounter = 0;
+int counter = 0;
 sigset_t fullMask;
 
 void rtminHandler(int signo) {
-    ctsCounter++;
+    counter++;
 }
 
 int main(int argc, char **argv) {
-    if (argc != 3) showUsage();
-    if (atexit(freeResources) == -1) throwEx("Breeder: atexit failed!");
-    if (signal(SIGINT, intHandler) == SIG_ERR) throwEx("Breeder: signal failed!");
-    if (signal(SIGRTMIN, rtminHandler) == SIG_ERR) throwEx("Breeder: signal failed!");
 
-    int clNum = validateClNum(atoi(argv[1]));
-    int ctsNum = validateCtsNum(atoi(argv[2]));
+    if (argc != 3) {
+        printf("Need 2 arguments: number of clients and cuts\n");
+        exit(1);
+    }
+    int clientsAmount = atoi(argv[1]);
+    int serviceAmount = atoi(argv[2]);
 
-    prepareFifo();
-    prepareSemafors();
+    signal(SIGRTMIN, rtminHandler);
+
+
+    char *path = getenv(env);
+    if (path == NULL){
+        exit(1);
+    }
+
+    fifoKey = ftok(path, PROJECT_ID);
+    if (fifoKey == -1){
+        exit(1);
+    }
+
+    shmID = shmget(fifoKey, 0, 0);
+    if (shmID == -1){
+        exit(1);
+    }
+
+    void *tmp = shmat(shmID, NULL, 0);
+    if (tmp == (void *) (-1)){
+        exit(1);
+    }
+    fifo = (Fifo *) tmp;
+
+    SID = semget(fifoKey, 0, 0);
+    if (SID == -1) {
+        exit(1);
+    }
+
+
     prepareFullMask();
 
     sigset_t mask;
-    if (sigemptyset(&mask) == -1) throwEx("Breeder: emptyset failed!");
-    if (sigaddset(&mask, SIGRTMIN) == -1) throwEx("Breeder: sigaddset failed!");
-    if (sigprocmask(SIG_BLOCK, &mask, NULL) == -1) throwEx("Breeder: sigprocmask failed!");
+    if (sigemptyset(&mask) == -1){
+        exit(1);
+    }
+    if (sigaddset(&mask, SIGRTMIN) == -1) {
+        exit(1);
+    }
+    if (sigprocmask(SIG_BLOCK, &mask, NULL) == -1){
+        exit(1);
+    }
 
-    for (int i = 0; i < clNum; i++) {
+
+
+    for (int i = 0; i < clientsAmount; i++) {
         pid_t id = fork();
-        if (id == -1) throwEx("Fork failed...");
         if (id == 0) {
-            getCut(ctsNum);
+            getCut(serviceAmount);
             return 0;
         }
     }
 
-    printf("All clients has been bred!\n");
+
     while (1) {
-        wait(NULL); // czekaj na dzieci
+        wait(NULL);
         if (errno == ECHILD) break;
     }
-
+    printf("All clients serviced!\n");
     return 0;
 }
 
-void getCut(int ctsNum) {
-    while (ctsCounter < ctsNum) {
-        struct sembuf sops;
-        sops.sem_num = CHECKER;
-        sops.sem_op = -1;
-        sops.sem_flg = 0;
-        if (semop(SID, &sops, 1) == -1) throwEx("Client: taking checker failed!");
+void getCut(int serviceAmount) {
+    while (counter < serviceAmount) {
+        struct sembuf buf;
+        buf.sem_num = CHECKER;
+        buf.sem_op = -1;
+        buf.sem_flg = 0;
+        if (semop(SID, &buf, 1) == -1){
+            exit(1);
+        }
 
-        sops.sem_num = FIFO;
-        if (semop(SID, &sops, 1) == -1) throwEx("Client: taking FIFO failed!");
+        buf.sem_num = FIFO;
+        if (semop(SID, &buf, 1) == -1){
+            exit(1);
+        }
 
-        int res = takePlace();
+        int res = enterBarber();
 
-        sops.sem_op = 1;
-        if (semop(SID, &sops, 1) == -1) throwEx("Client: releasing FIFO failed!");
+        buf.sem_op = 1;
+        if (semop(SID, &buf, 1) == -1){
+            exit(1);
+        }
 
-        sops.sem_num = CHECKER;
-        if (semop(SID, &sops, 1) == -1) throwEx("Client: releasing checker failed!");
+        buf.sem_num = CHECKER;
+        if (semop(SID, &buf, 1) == -1){
+            exit(1);
+        }
 
         if (res != -1) {
             sigsuspend(&fullMask);
-            long timeMarker = getMicroTime();
-            printf("Time: %ld, Client %d just got cut!\n", timeMarker, getpid());
-            fflush(stdout);
+            printTime();
+            printf(" client %d was serviced!\n", getpid());
         }
     }
 }
 
-int takePlace() {
-    int barberStat = semctl(SID, 0, GETVAL);
-    if (barberStat == -1) throwEx("Client: getting value of BARBER sem failed!");
+int enterBarber() {
+    int barbState = semctl(SID, 0, GETVAL);
+    if (barbState == -1){
+        exit(1);
+    }
 
-    pid_t myPID = getpid();
+    if (barbState == 0) {
+        struct sembuf buf;
+        buf.sem_num = BARBER;
+        buf.sem_op = 1;
+        buf.sem_flg = 0;
 
-    if (barberStat == 0) {
-        struct sembuf sops;
-        sops.sem_num = BARBER;
-        sops.sem_op = 1;
-        sops.sem_flg = 0;
+        if (semop(SID, &buf, 1) == -1){
+            exit(1);
+        }
+        printTime();
+        printf(" client %d is awakening barber!\n", getpid());
+        if (semop(SID, &buf, 1) == -1) {
+            exit(1);
+        }
 
-        if (semop(SID, &sops, 1) == -1) throwEx("Client: awakening barber failed!");
-        long timeMarker = getMicroTime();
-        printf("Time: %ld, Client %d has awakened barber!\n", timeMarker, myPID);
-        fflush(stdout);
-        if (semop(SID, &sops, 1) == -1) throwEx("Client: awakening barber failed!");
-
-        fifo->chair = myPID;
+        fifo->chair = getpid();
 
         return 1;
     } else {
-        int res = pushFifo(fifo, myPID);
+        int res = pushFifo(fifo, getpid());
         if (res == -1) {
-            long timeMarker = getMicroTime();
-            printf("Time: %ld, Client %d couldnt find free place!\n", timeMarker, myPID);
-            fflush(stdout);
+            printTime();
+            printf(" client %d has no place inside\n", getpid());
             return -1;
         } else {
-            long timeMarker = getMicroTime();
-            printf("Time: %ld, Client %d took place in the queue!\n", timeMarker, myPID);
-            fflush(stdout);
+            printTime();
+            printf(" client %d is in the queue now\n", getpid());
             return 0;
         }
     }
 }
 
-void prepareFifo() {
-    char *path = getenv(env);
-    if (path == NULL) throwEx("Breeder: Getting enviromental variable failed!");
-
-    fifoKey = ftok(path, PROJECT_ID);
-    if (fifoKey == -1) throwEx("Breeder: getting key of shm failed!");
-
-    shmID = shmget(fifoKey, 0, 0);
-    if (shmID == -1) throwEx("Breeder: opening shm failed!");
-
-    void *tmp = shmat(shmID, NULL, 0);
-    if (tmp == (void *) (-1)) throwEx("Breeder: attaching shm failed!");
-    fifo = (Fifo *) tmp;
-}
-
-void prepareSemafors() {
-    SID = semget(fifoKey, 0, 0);
-    if (SID == -1) throwEx("Breeder: opening semafors failed!");
-}
-
 void prepareFullMask() {
-    if (sigfillset(&fullMask) == -1) throwEx("Breeder: sigfillset failed!");
-    if (sigdelset(&fullMask, SIGRTMIN) == -1) throwEx("Breeder: removing sigrtmin from fullMask failed!");
-    if (sigdelset(&fullMask, SIGINT) == -1) throwEx("Breeder: removing sigint from fullMask failed!");
-}
-
-void freeResources(void) {
-    if (shmdt(fifo) == -1) printf("Breeder: Error detaching fifo sm!\n");
-    else printf("Breeder: detached fifo sm!\n");
+    if (sigfillset(&fullMask) == -1) {
+        exit(1);
+    }
+    if (sigdelset(&fullMask, SIGRTMIN) == -1) {
+        exit(1);
+    }
+    if (sigdelset(&fullMask, SIGINT) == -1) {
+        exit(1);
+    }
 }
