@@ -13,17 +13,22 @@
 #include <time.h>
 #include <signal.h>
 #include <sys/types.h>
-#include <sys/shm.h>
-#include <sys/ipc.h>
-#include <sys/sem.h>
+
+#include <sys/mman.h>
+#include <semaphore.h>
+#include <fcntl.h>
+#include <sys/stat.h>
 #include <sys/wait.h>
 
 
-#define MAX_SIZE 1000
-const char env[] = "HOME";
 
-#define BARBER 0
-#define FIFO 1
-#define CHECKER 2
+#define MAX_SIZE 1000
+
+//#define PROJECT_ID 37
+const char shmPath[] = "/shm";
+const char barberPath[] = "/barber";
+const char fifoPath[] = "/fifo";
+const char checkerPath[] = "/checker";
+const char slowerPath[] = "/slower";
 
 #endif
