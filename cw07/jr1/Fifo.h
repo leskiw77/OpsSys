@@ -1,6 +1,9 @@
 #ifndef FIFO_H
 #define FIFO_H
 
+#include <time.h>
+#include <stdlib.h>
+
 typedef struct Fifo{
     int max;
     int head;

@@ -16,31 +16,25 @@
 #include <sys/ipc.h>
 #include <sys/sem.h>
 
-#include "helpers.h" // popFragment, trimWhite, getQID
-#include "Fifo.h"
+
 #include "hairdresser.h"
+#include "Fifo.h"
 
-void showUsage() {
-    printf("Use program like ./barber.out <chairNumber>\n");
-    exit(1);
-}
-
-void validateChNum(int num) {
-    if (num < 5 || num > 1000) throwEx("Wrong number of Chairs!");
+void printTime() {
+    struct timespec time;
+    if (clock_gettime(CLOCK_MONOTONIC, &time) == -1){
+        exit(1);
+    }
+    printf("Time %ld :", (long)(time.tv_nsec / 1000));
 }
 
 
 void clearResources(void);
 
-void prepareFifo(int chNum);
-
-void prepareSemafors();
-
-void napAndWorkForever();
 
 void cut(pid_t pid);
 
-pid_t takeChair(struct sembuf *);
+pid_t inviteNew(struct sembuf *);
 
 void sigHandler(int signo) {
     clearResources();
@@ -77,7 +71,7 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    shmID = shmget(fifoKey, sizeof(Fifo), IPC_CREAT | IPC_EXCL | 0666);
+    shmID = shmget(fifoKey, sizeof(Fifo), IPC_CREAT | 0666);
     if (shmID == -1){
         return 1;
     }
@@ -87,7 +81,7 @@ int main(int argc, char **argv) {
 
     fifoInit(fifo, chairsAmount);
 
-    SID = semget(fifoKey, 4, IPC_CREAT | IPC_EXCL | 0666);
+    SID = semget(fifoKey, 4, IPC_CREAT | 0666);
     if (SID == -1){
         return 1;
     }
@@ -113,7 +107,11 @@ int main(int argc, char **argv) {
             return 1;
         }
 
-        pid_t toCut = takeChair(&sops);
+        printTime();
+        printf(" barber awaken and mad\n");
+
+        //klient ktory budzi golibrode
+        pid_t toCut = inviteNew(&sops);
         cut(toCut);
 
         while (1) {
@@ -126,89 +124,60 @@ int main(int argc, char **argv) {
 
             if (toCut != -1) { // jesli istnial, to zwolnij kolejke, ostrzyz i kontynuuj
                 sops.sem_op = 1;
-                if (semop(SID, &sops, 1) == -1) throwEx("Barber: 4 sops failed!");
+                if (semop(SID, &sops, 1) == -1){
+                    exit(1);
+                }
                 cut(toCut);
             } else { // jesli kolejka pusta, to ustaw, ze spisz, zwolnij kolejke i spij dalej (wyjdz z petli)
-                long timeMarker = getMicroTime();
-                printf("Time: %ld, Barber: going to sleep...\n", timeMarker);
-                fflush(stdout);
+                printTime();
+                printf(" barber fall asleep\n");
                 sops.sem_num = BARBER;
                 sops.sem_op = -1;
-                if (semop(SID, &sops, 1) == -1) throwEx("Barber: 5 sops failed!");
+                if (semop(SID, &sops, 1) == -1){
+                    exit(1);
+                }
 
                 sops.sem_num = FIFO;
                 sops.sem_op = 1;
-                if (semop(SID, &sops, 1) == -1) throwEx("Barber: 6 sops failed!");
+                if (semop(SID, &sops, 1) == -1){
+                    exit(1);
+                }
                 break;
             }
         }
     }
-
     return 0;
 }
 
 
-pid_t takeChair(struct sembuf *sops) {
+pid_t inviteNew(struct sembuf *sops) {
     sops->sem_num = FIFO;
     sops->sem_op = -1;
-    if (semop(SID, sops, 1) == -1) throwEx("Barber: 1 sops failed!");
+    if (semop(SID, sops, 1) == -1){
+        exit(1);
+    }
 
     pid_t toCut = fifo->chair;
 
     sops->sem_op = 1;
-    if (semop(SID, sops, 1) == -1) throwEx("Barber: 2 sops failed!");
+    if (semop(SID, sops, 1) == -1){
+        exit(1);
+    }
 
     return toCut;
 }
 
 void cut(pid_t pid) {
-    long timeMarker = getMicroTime();
-    printf("Time: %ld, Barber: preparing to cut %d\n", timeMarker, pid);
-    fflush(stdout);
+    printTime();
+    printf(" barber cut user %d\n", pid);
 
     kill(pid, SIGRTMIN);
-
-    timeMarker = getMicroTime();
-    printf("Time: %ld, Barber: finished cutting %d\n", timeMarker, pid);
-    fflush(stdout);
 }
 
-void prepareFifo(int chNum) {
-    validateChNum(chNum);
-
-    char *path = getenv(env);
-    if (path == NULL) throwEx("Getting enviromental variable failed!");
-
-    fifoKey = ftok(path, PROJECT_ID);
-    if (fifoKey == -1) throwEx("Barber: getting key of shm failed!");
-
-    shmID = shmget(fifoKey, sizeof(Fifo), IPC_CREAT | IPC_EXCL | 0666);
-    if (shmID == -1) throwEx("Barber: creation of shm failed!");
-
-    void *tmp = shmat(shmID, NULL, 0);
-    if (tmp == (void *) (-1)) throwEx("Barber: attaching shm failed!");
-    fifo = (Fifo *) tmp;
-
-    fifoInit(fifo, chNum);
-}
-
-void prepareSemafors() {
-    SID = semget(fifoKey, 4, IPC_CREAT | IPC_EXCL | 0666);
-    if (SID == -1) throwEx("Barber: creation of semafors failed!");
-
-    for (int i = 1; i < 3; i++) {
-        if (semctl(SID, i, SETVAL, 1) == -1) throwEx("Barber: Error setting semafors!");
-    }
-    if (semctl(SID, 0, SETVAL, 0) == -1) throwEx("Barber: Error setting semafors!");
-}
 
 void clearResources(void) {
-    if (shmdt(fifo) == -1) printf("Barber: Error detaching fifo sm!\n");
-    else printf("Barber: detached fifo sm!\n");
-
-    if (shmctl(shmID, IPC_RMID, NULL) == -1) printf("Barber: Error deleting fifo sm!\n");
-    else printf("Barber: deleted fifo sm!\n");
-
-    if (semctl(SID, 0, IPC_RMID) == -1) printf("Barber: Error deleting semafors!");
-    else printf("Barber: deleted semafors!\n");
+    shmdt(fifo);
+    shmctl(shmID, IPC_RMID, NULL);
+    semctl(SID, 0, IPC_RMID);
+    printf("\nBarber cleaned his workplace and went home\n");
 }
