@@ -7,18 +7,18 @@ void fifoInit(Fifo* fifo, int cn){
     fifo->chair = 0;
 }
 
-int isEmptyFifo(Fifo* fifo){
+int isEmpty(Fifo* fifo){
     if(fifo->head == -1) return 1;
     else return 0;
 }
 
-int isFullFifo(Fifo* fifo){
+int isFull(Fifo* fifo){
     if(fifo->head == fifo->tail) return 1;
     else return 0;
 }
 
-pid_t popFifo(Fifo* fifo){
-    if(isEmptyFifo(fifo) == 1) return -1;
+pid_t takeFirst(Fifo* fifo){
+    if(isEmpty(fifo) == 1) return -1;
 
     fifo->chair = fifo->tab[fifo->head++];
     if(fifo->head == fifo->max) fifo->head = 0;
@@ -28,9 +28,9 @@ pid_t popFifo(Fifo* fifo){
     return fifo->chair;
 }
 
-int pushFifo(Fifo* fifo, pid_t x){
-    if(isFullFifo(fifo) == 1) return -1;
-    if(isEmptyFifo(fifo) == 1){
+int addLast(Fifo* fifo, pid_t x){
+    if(isFull(fifo) == 1) return -1;
+    if(isEmpty(fifo) == 1){
         fifo->head = fifo->tail;
     }
 

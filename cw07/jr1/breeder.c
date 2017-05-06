@@ -1,25 +1,7 @@
 #define _GNU_SOURCE
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <assert.h>
-#include <string.h>
-#include <errno.h>
-#include <unistd.h>
-#include <sys/ipc.h>
-#include <sys/msg.h>
-#include <ctype.h>
-#include <time.h>
-#include <signal.h>
-#include <sys/types.h>
-#include <sys/shm.h>
-#include <sys/ipc.h>
-#include <sys/sem.h>
-#include <sys/wait.h>
-
-
 #include "Fifo.h"
-#include "hairdresser.h"
+#include "general.h"
 
 
 void printTime() {
@@ -69,7 +51,7 @@ int main(int argc, char **argv) {
         exit(1);
     }
 
-    fifoKey = ftok(path, PROJECT_ID);
+    fifoKey = ftok(path, 'f');
     if (fifoKey == -1){
         exit(1);
     }
@@ -183,7 +165,7 @@ int enterBarber() {
 
         return 1;
     } else {
-        int res = pushFifo(fifo, getpid());
+        int res = addLast(fifo, getpid());
         if (res == -1) {
             printTime();
             printf(" client %d has no place inside\n", getpid());

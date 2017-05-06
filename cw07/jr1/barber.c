@@ -1,23 +1,8 @@
 #define _GNU_SOURCE
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <assert.h>
-#include <string.h>
-#include <errno.h>
-#include <unistd.h>
-#include <sys/ipc.h>
-#include <sys/msg.h>
-#include <ctype.h>
-#include <time.h>
-#include <signal.h>
-#include <sys/types.h>
-#include <sys/shm.h>
-#include <sys/ipc.h>
-#include <sys/sem.h>
 
 
-#include "hairdresser.h"
+#include "general.h"
 #include "Fifo.h"
 
 void printTime() {
@@ -66,7 +51,7 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    fifoKey = ftok(path, PROJECT_ID);
+    fifoKey = ftok(path, 'f');
     if (fifoKey == -1){
         return 1;
     }
@@ -120,7 +105,7 @@ int main(int argc, char **argv) {
             if (semop(SID, &buf, 1) == -1){
                 return 1;
             }
-            toCut = popFifo(fifo); // zajmij FIFO i pobierz pierwszego z kolejki
+            toCut = takeFirst(fifo); // zajmij FIFO i pobierz pierwszego z kolejki
 
             if (toCut != -1) { // jesli istnial, to zwolnij kolejke, ostrzyz i kontynuuj
                 buf.sem_op = 1;
