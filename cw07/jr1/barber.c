@@ -83,7 +83,7 @@ int main(int argc, char **argv) {
 
     while (1) {
         struct sembuf buf;
-        buf.sem_num = BARBER;
+        buf.sem_num = BARBER_VAL;
         buf.sem_op = -1;
         buf.sem_flg = 0;
 
@@ -100,12 +100,12 @@ int main(int argc, char **argv) {
         cut(toCut);
 
         while (1) {
-            buf.sem_num = FIFO;
+            buf.sem_num = FIFO_VAL;
             buf.sem_op = -1;
             if (semop(SID, &buf, 1) == -1){
                 return 1;
             }
-            toCut = takeFirst(fifo); // zajmij FIFO i pobierz pierwszego z kolejki
+            toCut = takeFirst(fifo); // zajmij FIFO_VAL i pobierz pierwszego z kolejki
 
             if (toCut != -1) { // jesli istnial, to zwolnij kolejke, ostrzyz i kontynuuj
                 buf.sem_op = 1;
@@ -116,13 +116,13 @@ int main(int argc, char **argv) {
             } else { // jesli kolejka pusta, to ustaw, ze spisz, zwolnij kolejke i spij dalej (wyjdz z petli)
                 printTime();
                 printf(" barber fall asleep\n");
-                buf.sem_num = BARBER;
+                buf.sem_num = BARBER_VAL;
                 buf.sem_op = -1;
                 if (semop(SID, &buf, 1) == -1){
                     exit(1);
                 }
 
-                buf.sem_num = FIFO;
+                buf.sem_num = FIFO_VAL;
                 buf.sem_op = 1;
                 if (semop(SID, &buf, 1) == -1){
                     exit(1);
@@ -136,7 +136,7 @@ int main(int argc, char **argv) {
 
 
 pid_t inviteNew(struct sembuf *buf) {
-    buf->sem_num = FIFO;
+    buf->sem_num = FIFO_VAL;
     buf->sem_op = -1;
     if (semop(SID, buf, 1) == -1){
         exit(1);

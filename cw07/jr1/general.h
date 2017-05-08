@@ -22,8 +22,8 @@
 #define MAX_SIZE 1000
 const char env[] = "HOME";
 
-#define BARBER 0
-#define FIFO 1
-#define CHECKER 2
+#define BARBER_VAL 0
+#define FIFO_VAL 1
+#define WAKE_VAL 2
 
 #endif

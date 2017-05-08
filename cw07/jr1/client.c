@@ -108,14 +108,14 @@ int main(int argc, char **argv) {
 void getCut(int serviceAmount) {
     while (counter < serviceAmount) {
         struct sembuf buf;
-        buf.sem_num = CHECKER;
+        buf.sem_num = WAKE_VAL;
         buf.sem_op = -1;
         buf.sem_flg = 0;
         if (semop(SID, &buf, 1) == -1){
             exit(1);
         }
 
-        buf.sem_num = FIFO;
+        buf.sem_num = FIFO_VAL;
         if (semop(SID, &buf, 1) == -1){
             exit(1);
         }
@@ -127,7 +127,7 @@ void getCut(int serviceAmount) {
             exit(1);
         }
 
-        buf.sem_num = CHECKER;
+        buf.sem_num = WAKE_VAL;
         if (semop(SID, &buf, 1) == -1){
             exit(1);
         }
@@ -148,7 +148,7 @@ int enterBarber() {
 
     if (barbState == 0) {
         struct sembuf buf;
-        buf.sem_num = BARBER;
+        buf.sem_num = BARBER_VAL;
         buf.sem_op = 1;
         buf.sem_flg = 0;
 
