@@ -33,9 +33,9 @@ void sigHandler(int signo) {
     exit(2);
 }
 
-sem_t *BARBER;
-sem_t *FIFO;
-sem_t *CHECKER;
+sem_t *BARBER_VAL;
+sem_t *FIFO_VAL;
+sem_t *WAKE_VAL;
 sem_t *SLOWER;
 
 int main(int argc, char **argv) {
@@ -69,18 +69,18 @@ int main(int argc, char **argv) {
 
     fifoInit(fifo, chairsAmount);
 
-    BARBER = sem_open(barberPath, O_CREAT | O_EXCL | O_RDWR, 0666, 0);
-    if (BARBER == SEM_FAILED) {
+    BARBER_VAL = sem_open(barberPath, O_CREAT | O_EXCL | O_RDWR, 0666, 0);
+    if (BARBER_VAL == SEM_FAILED) {
         exit(1);
     }
 
-    FIFO = sem_open(fifoPath, O_CREAT | O_EXCL | O_RDWR, 0666, 1);
-    if (FIFO == SEM_FAILED)  {
+    FIFO_VAL = sem_open(fifoPath, O_CREAT | O_EXCL | O_RDWR, 0666, 1);
+    if (FIFO_VAL == SEM_FAILED)  {
         exit(1);
     }
 
-    CHECKER = sem_open(checkerPath, O_CREAT | O_EXCL | O_RDWR, 0666, 1);
-    if (CHECKER == SEM_FAILED)  {
+    WAKE_VAL = sem_open(wakePath, O_CREAT | O_EXCL | O_RDWR, 0666, 1);
+    if (WAKE_VAL == SEM_FAILED)  {
         exit(1);
     }
 
@@ -91,16 +91,18 @@ int main(int argc, char **argv) {
 
 
     while (1) {
-        if (sem_wait(BARBER) == -1)  {
+        if (sem_wait(BARBER_VAL) == -1)  {
             exit(1);
         }
 
-        if (sem_post(BARBER) == -1)  {
+        if (sem_post(BARBER_VAL) == -1)  {
             exit(1);
         }
+
         if (sem_post(SLOWER) == -1) {
             exit(1);
         }
+
 
         printTime();
         printf(" barber awaken and mad\n");
@@ -109,13 +111,13 @@ int main(int argc, char **argv) {
         cut(toCut);
 
         while (1) {
-            if (sem_wait(FIFO) == -1) {
+            if (sem_wait(FIFO_VAL) == -1) {
                 exit(1);
             }
             toCut = takeFirst(fifo);
 
             if (toCut != -1) {
-                if (sem_post(FIFO) == -1) {
+                if (sem_post(FIFO_VAL) == -1) {
                     exit(1);
                 }
                 cut(toCut);
@@ -123,11 +125,11 @@ int main(int argc, char **argv) {
                 printTime();
                 printf(" barber fall asleep\n");
 
-                if (sem_wait(BARBER) == -1){
+                if (sem_wait(BARBER_VAL) == -1){
                     exit(1);
                 }
 
-                if (sem_post(FIFO) == -1){
+                if (sem_post(FIFO_VAL) == -1){
                     exit(1);
                 }
                 break;
@@ -139,13 +141,13 @@ int main(int argc, char **argv) {
 }
 
 pid_t inviteNew() {
-    if (sem_wait(FIFO) == -1){
+    if (sem_wait(FIFO_VAL) == -1){
         exit(1);
     }
 
     pid_t toCut = fifo->chair;
 
-    if (sem_post(FIFO) == -1){
+    if (sem_post(FIFO_VAL) == -1){
         exit(1);
     }
 
@@ -164,14 +166,14 @@ void clearResources(void) {
     munmap(fifo, sizeof(fifo));
     shm_unlink(shmPath);
 
-    sem_close(BARBER) ;
+    sem_close(BARBER_VAL) ;
     sem_unlink(barberPath);
 
-    sem_close(FIFO) ;
+    sem_close(FIFO_VAL) ;
     sem_unlink(fifoPath);
 
-    sem_close(CHECKER) ;
-    sem_unlink(checkerPath);
+    sem_close(WAKE_VAL) ;
+    sem_unlink(wakePath);
 
     sem_close(SLOWER);
     sem_unlink(slowerPath);

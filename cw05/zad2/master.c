@@ -79,7 +79,7 @@ int main(int argc, char *argv[]) {
     unlink(pathname);
 
     if (mkfifo(pathname, 0777) == -1) {
-        printf("Cannot create FIFO special file\n");
+        printf("Cannot create FIFO_VAL special file\n");
         exit(1);
     } else {
         printf("Created\n");

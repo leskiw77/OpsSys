@@ -1,5 +1,5 @@
-#ifndef FIFO_H
-#define FIFO_H
+#ifndef FIFO_VAL_H
+#define FIFO_VAL_H
 
 #include <time.h>
 #include <stdlib.h>

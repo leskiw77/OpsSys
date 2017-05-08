@@ -1,5 +1,5 @@
-#ifndef HAIRDRESSER_H
-#define HAIRDRESSER_H
+#ifndef GENERAL_H
+#define GENERAL_H
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -20,15 +20,13 @@
 #include <sys/stat.h>
 #include <sys/wait.h>
 
-
-
 #define MAX_SIZE 1000
 
-//#define PROJECT_ID 37
+
 const char shmPath[] = "/shm";
-const char barberPath[] = "/barber";
+const char barberPath[] = "/barb";
 const char fifoPath[] = "/fifo";
-const char checkerPath[] = "/checker";
+const char wakePath[] = "/wake";
 const char slowerPath[] = "/slower";
 
 #endif

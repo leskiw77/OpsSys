@@ -23,9 +23,9 @@ void getCut(int ctsNum);
 
 Fifo* fifo = NULL;
 
-sem_t* BARBER;
-sem_t* FIFO;
-sem_t* CHECKER;
+sem_t* BARBER_VAL;
+sem_t* FIFO_VAL;
+sem_t* WAKE_VAL;
 sem_t* SLOWER;
 
 int counter = 0;
@@ -52,18 +52,18 @@ int main(int argc, char** argv){
     void* tmp = mmap(NULL, sizeof(Fifo), PROT_READ | PROT_WRITE, MAP_SHARED, shmID, 0);
     fifo = (Fifo*) tmp;
 
-    BARBER = sem_open(barberPath, O_RDWR);
-    if(BARBER == SEM_FAILED){
+    BARBER_VAL = sem_open(barberPath, O_RDWR);
+    if(BARBER_VAL == SEM_FAILED){
         exit(1);
     }
 
-    FIFO = sem_open(fifoPath, O_RDWR);
-    if(FIFO == SEM_FAILED){
+    FIFO_VAL = sem_open(fifoPath, O_RDWR);
+    if(FIFO_VAL == SEM_FAILED){
         exit(1);
     }
 
-    CHECKER = sem_open(checkerPath, O_RDWR);
-    if(CHECKER == SEM_FAILED) {
+    WAKE_VAL = sem_open(wakePath, O_RDWR);
+    if(WAKE_VAL == SEM_FAILED) {
         exit(1);
     }
 
@@ -103,21 +103,21 @@ int main(int argc, char** argv){
 
 void getCut(int serviceAmount){
     while(counter < serviceAmount){
-        if(sem_wait(CHECKER) == -1) {
+        if(sem_wait(WAKE_VAL) == -1) {
             exit(1);
         }
 
-        if(sem_wait(FIFO) == -1) {
+        if(sem_wait(FIFO_VAL) == -1) {
             exit(1);
         }
 
         int res = enterBarber();
 
-        if(sem_post(FIFO) == -1) {
+        if(sem_post(FIFO_VAL) == -1) {
             exit(1);
         }
 
-        if(sem_post(CHECKER) == -1) {
+        if(sem_post(WAKE_VAL) == -1) {
             exit(1);
         }
 
@@ -131,21 +131,24 @@ void getCut(int serviceAmount){
 
 int enterBarber(){
     int barberStat;
-    if(sem_getvalue(BARBER, &barberStat) == -1) {
+    if(sem_getvalue(BARBER_VAL, &barberStat) == -1) {
         exit(1);
     }
 
     pid_t myPID = getpid();
 
     if(barberStat == 0){
-        if(sem_post(BARBER) == -1) {
+        if(sem_post(BARBER_VAL) == -1) {
             exit(1);
         }
         printTime();
         printf(" client %d is awakening barber!\n", getpid());
+
+
         if(sem_wait(SLOWER) == -1){
             exit(1);
         }
+
 
         fifo->chair = myPID;
 
@@ -179,8 +182,8 @@ void prepareFullMask(){
 void freeResources(void){
     munmap(fifo, sizeof(fifo));
 
-    sem_close(BARBER);
-    sem_close(FIFO);
-    sem_close(CHECKER);
+    sem_close(BARBER_VAL);
+    sem_close(FIFO_VAL);
+    sem_close(WAKE_VAL);
     sem_close(SLOWER);
 }
