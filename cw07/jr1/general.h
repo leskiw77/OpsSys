@@ -1,5 +1,5 @@
-#ifndef HAIRDRESSER_H
-#define HAIRDRESSER_H
+#ifndef GENERAL_H
+#define GENERAL_H
 
 #include <stdio.h>
 #include <stdlib.h>
