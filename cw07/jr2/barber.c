@@ -36,7 +36,7 @@ void sigHandler(int signo) {
 sem_t *BARBER_VAL;
 sem_t *FIFO_VAL;
 sem_t *WAKE_VAL;
-sem_t *SLOWER;
+sem_t *BLOCK_SAME;
 
 int main(int argc, char **argv) {
     signal(SIGINT, sigHandler);
@@ -84,8 +84,8 @@ int main(int argc, char **argv) {
         exit(1);
     }
 
-    SLOWER = sem_open(slowerPath, O_CREAT | O_EXCL | O_RDWR, 0666, 0);
-    if (SLOWER == SEM_FAILED) {
+    BLOCK_SAME = sem_open(blockPath, O_CREAT | O_EXCL | O_RDWR, 0666, 0);
+    if (BLOCK_SAME == SEM_FAILED) {
         exit(1);
     }
 
@@ -99,10 +99,9 @@ int main(int argc, char **argv) {
             exit(1);
         }
 
-        if (sem_post(SLOWER) == -1) {
+        if (sem_post(BLOCK_SAME) == -1) {
             exit(1);
         }
-
 
         printTime();
         printf(" barber awaken and mad\n");
@@ -175,8 +174,8 @@ void clearResources(void) {
     sem_close(WAKE_VAL) ;
     sem_unlink(wakePath);
 
-    sem_close(SLOWER);
-    sem_unlink(slowerPath);
+    sem_close(BLOCK_SAME);
+    sem_unlink(blockPath);
 
     printf("\nBarber cleaned his workplace and went home\n");
 }

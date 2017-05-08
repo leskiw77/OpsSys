@@ -26,7 +26,7 @@ Fifo* fifo = NULL;
 sem_t* BARBER_VAL;
 sem_t* FIFO_VAL;
 sem_t* WAKE_VAL;
-sem_t* SLOWER;
+sem_t* BLOCK_SAME;
 
 int counter = 0;
 sigset_t fullMask;
@@ -67,8 +67,8 @@ int main(int argc, char** argv){
         exit(1);
     }
 
-    SLOWER = sem_open(slowerPath, O_RDWR);
-    if(SLOWER == SEM_FAILED){
+    BLOCK_SAME = sem_open(blockPath, O_RDWR);
+    if(BLOCK_SAME == SEM_FAILED){
         exit(1);
     }
 
@@ -144,8 +144,7 @@ int enterBarber(){
         printTime();
         printf(" client %d is awakening barber!\n", getpid());
 
-
-        if(sem_wait(SLOWER) == -1){
+        if(sem_wait(BLOCK_SAME) == -1){
             exit(1);
         }
 
@@ -185,5 +184,5 @@ void freeResources(void){
     sem_close(BARBER_VAL);
     sem_close(FIFO_VAL);
     sem_close(WAKE_VAL);
-    sem_close(SLOWER);
+    sem_close(BLOCK_SAME);
 }

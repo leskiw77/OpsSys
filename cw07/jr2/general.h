@@ -23,10 +23,10 @@
 #define MAX_SIZE 1000
 
 
-const char shmPath[] = "/shm";
+const char shmPath[] = "/sh";
 const char barberPath[] = "/barb";
 const char fifoPath[] = "/fifo";
 const char wakePath[] = "/wake";
-const char slowerPath[] = "/slower";
+const char blockPath[] = "/block";
 
 #endif
