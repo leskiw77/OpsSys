@@ -135,7 +135,7 @@ void prepareFifo(int chNum) {
     fifoKey = ftok(path, PROJECT_ID);
     if (fifoKey == -1) throwEx("Barber: getting key of shm failed!");
 
-    shmID = shmget(fifoKey, sizeof(Fifo), IPC_CREAT | IPC_EXCL | 0666);
+    shmID = shmget(fifoKey, sizeof(Fifo), IPC_CREAT | 0666);
     if (shmID == -1) throwEx("Barber: creation of shm failed!");
 
     void *tmp = shmat(shmID, NULL, 0);
@@ -146,7 +146,7 @@ void prepareFifo(int chNum) {
 }
 
 void prepareSemafors() {
-    SID = semget(fifoKey, 4, IPC_CREAT | IPC_EXCL | 0666);
+    SID = semget(fifoKey, 4, IPC_CREAT | 0666);
     if (SID == -1) throwEx("Barber: creation of semafors failed!");
 
     for (int i = 1; i < 3; i++) {

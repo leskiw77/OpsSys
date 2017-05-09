@@ -15,7 +15,6 @@ client  : client.o fifo.o
 client.o : general.h client.c
 	$(CC) -c client.c $(CFLAGS) -o client.o
 
-
 fifo.o : Fifo.h Fifo.c
 	$(CC) -c Fifo.c $(CFLAGS) -o fifo.o
 
