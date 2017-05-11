@@ -1,0 +1,50 @@
+Sprzęt: TODO
+System: TODO
+Kernel: TODO
+
+Komunikat SIGUSR1: "Sygnał użytkownika 1"
+Komunikat SIGTERM: "Zakończony"
+Komunikat SIGKILL: "Unicestwiony"
+Komunikat SIGSTOP: "[1]+  Zatrzymano              ./main 5 somefile 2 slowo 1 19"
+Program zakończony normalnie: 139679701944064: znalazl szukane slowo w rekordzie o id = 23
+Komunikat handlera: Otrzymano SIGUSR1 PID: 17709 TID: 140301824947968
+
+
+1. wysłanie sygnału do procesu, gdy żaden wątek nie ma zamaskowanego tego sygnału
+  - dla każdego sygnału zostaje wypisany odpowiedni komunikat, po czym program
+    kończy się
+
+2. wysłanie sygnału do procesu, gdy główny wątek programu ma zamaskowany
+  ten sygnał, a wszystkie pozostałe wątki nie
+  - program nie reaguje na SIGUSR1 i SIGTERM;
+  - dla SIGKILL i SIGSTOP działanie domyślne, ponieważ nie można ich zamaskować
+
+3. wysłanie sygnału do procesu, gdy wszystkie wątki mają zainstalowaną
+  niestandardową procedurę obsługi przerwania, która wypisuje informację
+  o nadejściu tego sygnału oraz PID i TID danego wątku
+  - SIGUSR1, SIGTERM - handler wypisuje pożądany komunikat, program
+    kontynuuje pracę normalnie
+  - SIGKILL, SIGSTOP - działanie domyślne
+
+4. wysłanie sygnału do wątku z zamaskowanym tym sygnałem
+  - SIGUSR1, SIGTERM - zależnie od przebiegu działania programu albo
+    program kończy się normalnie, albo kończy z komunikatem odpowiednim
+    dla otrzymanego sygnału
+  - SIGKILL, SIGTERM - działanie domyślne
+
+5. wysłanie sygnału do wątku, w którym zmieniona jest procedura obsługi sygnału,
+  jak przedstawiono w punkcie 3
+  - SIGUSR1, SIGTERM - zależnie od przebiegu działania programu albo
+    program kończy się normalnie, albo zostaje przechwycony sygnał, wypisany
+    pożądany komunikat, po czym program kończy się normalnie
+  - SIGKILL, SIGTERM - działanie domyślne
+
+//------------------------------------------------------------------------------
+Dzielenie przez zero generuje sygnał SIGFPE (8)
+"Signal: 8, TID: 496658176"
+
+Nie zamaskowanie tego sygnału powoduje zakończenie programu z komunikatem:
+"Błąd w obliczeniach zmiennoprzecinkowych (zrzut pamięci)"
+
+Domyślnie powoduje zakończenie procesu z zapisem obrazu pamięci. Czyli wszystkie
+pozostałe wątki także zostają zakończone.
