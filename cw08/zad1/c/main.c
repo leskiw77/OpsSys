@@ -14,7 +14,6 @@ int file;
 pthread_t *threads;
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 int BUFFERSIZE = 1024;
-int STARTJOB = 1;
 void* threadFunction(void*);
 
 
@@ -49,7 +48,6 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    STARTJOB = 0;
     // execute and wait for threads :
     for(int i = 0; i < numOfThreads; i++) {
         pthread_join(threads[i], NULL);
@@ -74,9 +72,6 @@ void * threadFunction(void *unused) {
     char* recID = calloc(2, sizeof(char));
     int numOfReadChars;
     int work = 1;
-
-    // ?
-    while(STARTJOB);
 
     while(work) {
         // lock mutex and read data to buffers :
