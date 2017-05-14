@@ -7,7 +7,6 @@
 #include <pthread.h>
 #include <signal.h>
 
-//--------------------------------------------------
 int numOfThreads;
 char *fileName;
 int numOfRecords;
@@ -19,13 +18,12 @@ int BUFFERSIZE = 1024;
 int STARTJOB = 1;
 int test, signr;
 
-//--------------------------------------------------
 void *threadFunction(void *);
 
 void signalHandler(int);
 
-//--------------------------------------------------
 int main(int argc, char *argv[]) {
+
     fileName = calloc(20, sizeof(char));
     word = calloc(10, sizeof(char));
 
@@ -39,7 +37,7 @@ int main(int argc, char *argv[]) {
     }
 
     numOfThreads = 5;
-    strcpy(fileName, "somefile");
+    strcpy(fileName, "fileWithRecords");
     numOfRecords = 2;
     strcpy(word, "slowo");
     test = atoi(argv[1]);
@@ -97,8 +95,8 @@ int main(int argc, char *argv[]) {
     return 0;
 }
 
-//--------------------------------------------------
-void *threadFunction(void *unused) {
+
+void * threadFunction(void *unused) {
     int i;
     pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
     char **readRecords = calloc(numOfRecords, sizeof(char *));
@@ -156,7 +154,7 @@ void *threadFunction(void *unused) {
     return NULL;
 }
 
-//-----------------------------------------------------
+
 void signalHandler(int signal) {
     if (signal == SIGUSR1) {
         printf("Otrzymano SIGUSR1\n");
