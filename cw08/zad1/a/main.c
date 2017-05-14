@@ -63,7 +63,7 @@ int main(int argc, char *argv[]) {
 
 // Po odszukaniu słowa wątek anuluje asynchronicznie wszystkie pozostałe wątki i kończy pracę
 void * threadFunction(void *unused) {
-    // setting cancel type :
+    // setting asynchronous cancel type :
     pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
 
     char **readRecords = calloc(numOfRecords, sizeof(char *));
@@ -78,6 +78,7 @@ void * threadFunction(void *unused) {
     while (STARTJOB);
 
     while (work) {
+        // lock mutex and read data to buffers :
         pthread_mutex_lock(&mutex);
         for (int i = 0; i < numOfRecords; i++) {
             if ((numOfReadChars = read(file, readRecords[i], BUFFERSIZE)) == -1) {
@@ -86,17 +87,21 @@ void * threadFunction(void *unused) {
             }
         }
         pthread_mutex_unlock(&mutex);
+
+        // search word in buffers :
         for (int i = 0; i < numOfRecords; i++) {
             if (strstr(readRecords[i], searchedWord) != NULL) {
                 strncpy(recID, readRecords[i], 2);
-                printf("%ld: znalazl szukane slowo w rekordzie o id = %d\n", pthread_self(), atoi(recID));
+                printf("%ld: found word in record id = %d\n", pthread_self(), atoi(recID));
+
+                // the word has been found, so cancel others threads :
                 for (int j = 0; j < numOfThreads; j++) {
                     if (threads[j] != pthread_self()) {
                         pthread_cancel(threads[j]);
                     }
                 }
                 work = 0;
-                i = numOfRecords;
+                break;
             }
         }
     }

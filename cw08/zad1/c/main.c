@@ -79,16 +79,16 @@ void * threadFunction(void *unused) {
     while(STARTJOB);
 
     while(work) {
-        // ? :
+        // lock mutex and read data to buffers :
         pthread_mutex_lock(&mutex);
-
-        // read records :
         for(int i = 0; i < numOfRecords; i++){
             if((numOfReadChars = read(file, readRecords[i], BUFFERSIZE)) == -1) {
                 printf("read(): %d: %s\n", errno, strerror(errno));
                 exit(-1);
             }
         }
+
+        // all records loaded to buffers so cancel others threads :
         if(numOfReadChars == 0) {
             for(int j = 0; j < numOfThreads; j++) {
                 if(threads[j] != pthread_self()) {
@@ -100,10 +100,11 @@ void * threadFunction(void *unused) {
         }
         pthread_mutex_unlock(&mutex);
 
-        for(i = 0; i < numOfRecords; i++) {
+        // find searched word in records :
+        for(int i = 0; i < numOfRecords; i++) {
             if(strstr(readRecords[i], searchedWord) != NULL) {
                 strncpy(recID, readRecords[i], 2);
-                printf("%ld: znalazl szukane slowo w rekordzie o id = %d\n", pthread_self(), atoi(recID));
+                printf("%ld: found word in record id = %d\n", pthread_self(), atoi(recID));
             }
         }
     }

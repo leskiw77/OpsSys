@@ -63,7 +63,7 @@ int main(int argc, char *argv[]) {
 // Wątek, który odszukał napis również anuluje pozostałe wątki, lecz anulowanie jest synchroniczne -
 // punktem anulowania wątku jest zakończenie przetwarzania wczytanej ilości rekordów do danych prywatnych
 void * threadFunction(void *unused) {
-    // setting cancel type :
+    // setting deferred cancel type :
     pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, NULL);
 
     char **readRecords = calloc(numOfRecords, sizeof(char *));
@@ -78,9 +78,8 @@ void * threadFunction(void *unused) {
     while (STARTJOB);
 
     while (work) {
-        // ? :
+        // lock mutex and read data to buffers :
         pthread_mutex_lock(&mutex);
-        // load records to buffer :
         for (int i = 0; i < numOfRecords; i++) {
             if ((numOfReadChars = read(file, readRecords[i], BUFFERSIZE)) == -1) {
                 printf("read(): %d: %s\n", errno, strerror(errno));
@@ -95,14 +94,16 @@ void * threadFunction(void *unused) {
         for (int i = 0; i < numOfRecords; i++) {
             if (strstr(readRecords[i], searchedWord) != NULL) {
                 strncpy(recID, readRecords[i], 2);
-                printf("%ld: znalazl szukane slowo w rekordzie o id = %d\n", pthread_self(), atoi(recID));
+                printf("%ld: found word in record id = %d\n", pthread_self(), atoi(recID));
+
+                // the word has been found, so cancel others threads :
                 for (int j = 0; j < numOfThreads; j++) {
                     if (threads[j] != pthread_self()) {
                         pthread_cancel(threads[j]);
                     }
                 }
                 work = 0;
-                i = numOfRecords;
+                break;
             }
         }
     }
