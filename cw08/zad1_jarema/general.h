@@ -1,7 +1,7 @@
 #ifndef SYS_GENERAL_H
 #define SYS_GENERAL_H
 
-#define BUFFERSIZE 10
+#define BUFFERSIZE 1024
 #define MAXIDDIGITS 5
 
 #define MAXFILENAME 10

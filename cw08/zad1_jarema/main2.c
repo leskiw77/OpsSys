@@ -55,6 +55,7 @@ int main(int argc, char *argv[]) {
 
 void * threadFunction(void *unused) {
     // setting deferred cancel type :
+    pthread_setcancelstate(PTHREAD_CANCEL_DISABLE,NULL);
     pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, NULL);
 
     sleep(1);
@@ -76,7 +77,9 @@ void * threadFunction(void *unused) {
     pthread_mutex_unlock(&mutex);
 
     usleep(1);
+    pthread_setcancelstate(PTHREAD_CANCEL_ENABLE,NULL);
     pthread_testcancel();
+    pthread_setcancelstate(PTHREAD_CANCEL_DISABLE,NULL);
 
     for (int i = 0; i < recordsNum; i++) {
         if (strstr(readRecords[i], searched) != NULL) {

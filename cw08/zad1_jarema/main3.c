@@ -53,7 +53,8 @@ int main(int argc, char *argv[]) {
 
 
 void * threadFunction(void *unused) {
-    pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
+    pthread_setcancelstate(PTHREAD_CANCEL_DISABLE,NULL);
+    pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, NULL);
 
     sleep(1);
 

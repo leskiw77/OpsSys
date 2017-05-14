@@ -29,7 +29,6 @@ int main(int argc, char *argv[]){
     char * record = (char *)malloc(BUFFERSIZE * sizeof(char));
 
     for(int i=0; i<rec; i++){
-        printf("%05d\n",i+1);
         rand_str(record,BUFFERSIZE-MAXIDDIGITS-1);
         fprintf(fp, "%05d%s\n", i+1, record);
     }
