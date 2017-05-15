@@ -1,6 +1,6 @@
 Sprzęt: X550CC (ASUS-NotebookSKU)
-System: TODO
-Kernel: TODO
+System: Linux Mint 18.1 Serena
+Kernel: 4.4.0-53-generic
 
 1) Wysłanie sygnału do procesu, gdy żaden wątek nie ma zamaskowanego tego sygnału
    * na konsoli wypisywany jest komunikat, a program kończy działanie (dla każdego sygnału)
@@ -27,11 +27,13 @@ Kernel: TODO
    * SIGUSR1, SIGTERM albo program zakończy się normalnie, albo przed normalnym zakończeniem
      zostaje przechwycony sygnał, a konsoli pojawia się stosowny komunikat
 
-Dzielenie przez zero generuje sygnał SIGFPE (8)
-"Signal: 8, TID: 496658176"
 
-Nie zamaskowanie tego sygnału powoduje zakończenie programu z komunikatem:
-"Błąd w obliczeniach zmiennoprzecinkowych (zrzut pamięci)"
+DZIELENIE PRZEZ 0 :
+Generowany jest sygnał SIGFPE (8), a na konsoli otrzymujemy przykładowo :
+Thread with TID=1920702208: signal 8
 
-Domyślnie powoduje zakończenie procesu z zapisem obrazu pamięci. Czyli wszystkie
-pozostałe wątki także zostają zakończone.
+Jeśli sygnał będzie niezamaskowany to otrzymujemy na konsoli:
+"Błąd w obliczeniach zmiennoprzecinkowych"
+
+Domyślnie zakończenie procesu z zapisem obrazu pamięci, a więc wszystkie
+pozostałe wątki zostają zakończone.
