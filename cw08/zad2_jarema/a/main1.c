@@ -14,7 +14,7 @@ void *threadFunction(void *);
 
 int main(int argc, char *argv[]) {
 
-    fileName = (char *)malloc(MAXFILENAME * sizeof(char));
+    fileName = (char *) malloc(MAXFILENAME * sizeof(char));
     searched = (char *) malloc(MAXSEARCH * sizeof(char));
 
     if (argc != 6) {
@@ -34,7 +34,7 @@ int main(int argc, char *argv[]) {
         return 2;
     }
 
-    threads = (pthread_t *)malloc(threadsNum * sizeof(pthread_t));
+    threads = (pthread_t *) malloc(threadsNum * sizeof(pthread_t));
 
     for (int i = 0; i < threadsNum; i++) {
         if (pthread_create(&threads[i], NULL, threadFunction, NULL) != 0) {
@@ -56,7 +56,7 @@ int main(int argc, char *argv[]) {
 }
 
 
-void * threadFunction(void *unused) {
+void *threadFunction(void *unused) {
     // setting asynchronous cancel type :
     pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
 
