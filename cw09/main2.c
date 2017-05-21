@@ -1,9 +1,7 @@
 #include "general.h"
 
 void *readerFunction(void *arg);
-
 void *writerFunction(void *arg);
-
 void createAndStartThreads();
 
 int array[ARRAYSIZE];
@@ -67,7 +65,7 @@ void createAndStartThreads() {
     // create threads :
     for (int i = 0; i < readersNumber; i++) {
         if (pthread_create(&readers[i], NULL, readerFunction, dividers + i) != 0) {
-            fprintf(stderr, "Cannot create thread %d\n", i);
+            fprintf(stderr, "Thread creation error %d\n", i);
             exit(1);
         }
     }
@@ -80,7 +78,7 @@ void createAndStartThreads() {
     }
     for (int i = 0; i < readersNumber; i++) {
         if (pthread_join(readers[i], NULL) != 0) {
-            fprintf(stderr, "Thread creation error %d\n", i);
+            fprintf(stderr, "Thread joining error %d\n", i);
             exit(1);
         }
     }
@@ -110,11 +108,11 @@ void *readerFunction(void *arg) {
             if (array[i] % divider == 0) {
                 counter++;
                 if (infoMode) {
-                    printf("%lu READER: array[%d] = %d , divider = %d\n", pthread_self(), i, array[i], divider);
+                    printf("%lu READER : array[%d] = %d , divider = %d\n", pthread_self(), i, array[i], divider);
                 }
             }
         }
-        printf("%lu READER: %d elements are dividable with %d\n", pthread_self(), counter, divider);
+        printf("%lu READER : %d elements are dividable with %d\n", pthread_self(), counter, divider);
 
         pthread_mutex_lock(&mutex);
         rdr--;
