@@ -13,6 +13,8 @@
 #include <errno.h>
 #include <string.h>
 #include <pthread.h>
+#include <stdbool.h>
+#include <semaphore.h>
 #include <time.h>
 
 #endif
