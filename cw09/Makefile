@@ -7,7 +7,7 @@ main1  :
 	$(CC) -o main1 main1.c -lpthread
 
 main2  :
-	$(CC) -o main2 main2.c -lpthread
+	$(CC) -o main2 main2.c -lpthread -lrt
 
 clean:
 	rm -f gen main1 main2

@@ -5,6 +5,7 @@
 #define MAXOPERATION 10
 #define MAXNUMBER 100
 #define MAXDEVIDER 5
+#define ACCESS 0666
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -15,6 +16,8 @@
 #include <pthread.h>
 #include <stdbool.h>
 #include <semaphore.h>
+#include <time.h>
+#include <sys/mman.h>
 #include <time.h>
 
 #endif
