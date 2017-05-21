@@ -62,10 +62,8 @@ int main(int argc, char *argv[]) {
     int writersNumber = atoi(argv[1]);
     int readersNumber = atoi(argv[2]);
 
-
     pthread_t * writerThreads = (pthread_t *)malloc(writersNumber * sizeof(pthread_t));
     pthread_t * readerThreads = (pthread_t *)malloc(readersNumber * sizeof(pthread_t));
-
 
     for (int i = 0; i < writersNumber; i++) {
         if (pthread_create(&writerThreads[i], NULL, writerFunction, NULL) != 0) {
