@@ -19,5 +19,12 @@
 #include <time.h>
 #include <sys/mman.h>
 #include <time.h>
+#include <sys/stat.h>
+
+
+static const char *RESOURCES_SEM = "resources";
+static const char *READERS_SEM = "readers";
+static const char *WRITERS_SEM = "writers";
+static const char *SHARED_MEM = "shared_memory";
 
 #endif

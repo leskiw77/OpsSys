@@ -1,97 +1,201 @@
 #include "general.h"
 
-int array[ARRAYSIZE];
-int verbose = 1;
 
-void * writerFunction(void *unused) {
+void *writerJob(void *);
 
-    int operations = rand()%MAXOPERATION;
+void *readerJob(void *);
 
-    for(int i=0;i<operations;i++){
 
-        int index = rand()%ARRAYSIZE;
-        int exchangeElem = rand()%MAXNUMBER;
-        if(verbose){
-            printf("Writer tid=%ld exchange element %d. Old value was %d and a new one is %d\n",pthread_self(), index,array[index],exchangeElem);
-        }
-        array[index] = exchangeElem;
-
-    }
-
-    return NULL;
-}
-
-void * readerFunction(void * number) {
-    int divider = *((int *)number);
-    if(divider == 0){
-        return NULL;
-    }
-    int correct[ARRAYSIZE];
-    int j=0;
-
-    for(int i=0;i<ARRAYSIZE;i++){
-        if((array[i] % divider) == 0){
-            correct[j] = array[i];
-            j++;
-        }
-    }
-
-    if(verbose){
-        printf("Dividers of %d: ",divider);
-        for(int i=0;i<j;i++){
-            printf("%d ",correct[i]);
-        }
-        printf("\n");
-    }
-
-    return NULL;
-}
+int readersNumber = 0, writersNumber = 0;
+int readersWaiting = 0;
+int howManyToRead = 0, howManyToWrite = 0;
+bool verbose = false, wait = true;
+sem_t *readers, *writers, *resource;
+int *memory;
 
 int main(int argc, char *argv[]) {
-
-    srand (time(NULL));
-
-    if (argc != 3) {
-        printf("Wrong arguments!\n");
+    if ((argc != 5 && argc != 6) || (argc == 6 && strcmp(argv[5], "-i") != 0)) {
+        printf("Wrong arguments\n"
+                       "Args : number of clients, number of writers, how many write, how many read, [-i]");
         return 1;
     }
 
-    for(int i=0;i<ARRAYSIZE;i++)
-        array[i] = i;
+    int memoryId;
+    pthread_t *threadIds;
 
-    int writersNumber = atoi(argv[1]);
-    int readersNumber = atoi(argv[2]);
+    readersNumber = atoi(argv[1]);
+    writersNumber = atoi(argv[2]);
+    howManyToRead = atoi(argv[3]);
+    howManyToWrite = atoi(argv[4]);
+    verbose = (argc == 6);
 
-    pthread_t * writerThreads = (pthread_t *)malloc(writersNumber * sizeof(pthread_t));
-    pthread_t * readerThreads = (pthread_t *)malloc(readersNumber * sizeof(pthread_t));
+    printf("%d",verbose);
+
+    //creating semaphores
+    readers = sem_open(READERS_SEM, O_CREAT | O_RDWR, 0666, 1);
+    writers = sem_open(WRITERS_SEM, O_CREAT | O_RDWR, 0666, 1);
+    resource = sem_open(RESOURCES_SEM, O_CREAT | O_RDWR, 0666, 1);
+    if(readers == SEM_FAILED || writers == SEM_FAILED || resource == SEM_FAILED){
+        printf("Semaphor error\n");
+        exit(1);
+    }
+
+
+
+    //creating shared memory
+    memoryId = shm_open(SHARED_MEM, O_CREAT | O_RDWR, 0666);
+    if(memoryId == -1){
+        printf("Error while creating shared memory\n");
+        exit(1);
+    }
+
+    if(ftruncate(memoryId, ARRAYSIZE * sizeof(int)) == -1){
+        printf("Error while truncating memory\n");
+        exit(1);
+    }
+    memory = mmap(NULL, ARRAYSIZE * sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED, memoryId, 0);
+    if(memory == (void *) -1){
+        printf("Error while mapping shared memoryy\n");
+        exit(1);
+    }
+
+
+    for (int i = 0; i < ARRAYSIZE; i++) {
+        memory[i] = rand() % MAXNUMBER;
+    }
+
+
+
+    threadIds = (pthread_t *) calloc(writersNumber + readersNumber, sizeof(pthread_t));
+
+
 
     for (int i = 0; i < writersNumber; i++) {
-        if (pthread_create(&writerThreads[i], NULL, writerFunction, NULL) != 0) {
-            printf("pthread_create(): %d: %s\n", errno, strerror(errno));
-            exit(-1);
+        if(pthread_create(&threadIds[i], NULL, writerJob, NULL) != 0){
+            printf("Couldn't create thread\n");
+            exit(1);
         }
     }
 
-    int tmp;
-    for (int i = 0; i < readersNumber; i++) {
-        tmp = rand()%MAXDEVIDER+1;
-        if (pthread_create(&readerThreads[i], NULL, readerFunction,(void *)&tmp) != 0) {
-            printf("pthread_create(): %d: %s\n", errno, strerror(errno));
-            exit(-1);
+    for (int i = writersNumber; i < writersNumber + readersNumber; i++) {
+        int divisor = rand() % MAXDEVIDER + 1;
+
+        if(pthread_create(&threadIds[i], NULL, readerJob, (void *) &divisor) != 0){
+            printf("Couldn't create thread\n");
+            exit(1);
         }
-        usleep(1);
     }
 
-    for (int i = 0; i < writersNumber; i++) {
-        pthread_join(writerThreads[i], NULL);
+    wait = false;
+
+    for (int i = 0; i <  writersNumber + readersNumber; i++) {
+        pthread_join(threadIds[i], NULL);
     }
 
-    for (int i = 0; i < readersNumber; i++) {
-        pthread_join(readerThreads[i], NULL);
-    }
 
-    free(writerThreads);
-    free(readerThreads);
+    munmap(memory, ARRAYSIZE * sizeof(int));
+    shm_unlink(SHARED_MEM);
+
+    sem_close(resource);
+    sem_unlink(RESOURCES_SEM);
+
+    sem_close(readers);
+    sem_unlink(READERS_SEM);
+
+    sem_close(writers);
+    sem_unlink(WRITERS_SEM);
+
+    free(threadIds);
+
     return 0;
+}
+
+
+void *writerJob(void *args) {
+    while (wait);
+
+    for (int i = 0; i < howManyToWrite; i++) {
+        //take semaphore
+        if(sem_wait(resource) == -1){
+            printf("Error while taking semaphore\n");
+            exit(1);
+        }
+
+        if (verbose)
+            printf("%lu WRITER : start to modify array\n", pthread_self());
+
+        int toModify = rand() % ARRAYSIZE;
+        for (int j = 0; j < toModify; j++) {
+            int index = rand() % ARRAYSIZE;
+            int value = rand() % MAXNUMBER;
+            if (verbose) {
+                printf("%lu WRITER : changed array[%d] => %d\n", pthread_self(), index, value);
+            }
+            memory[index] = value;
+        }
+
+        //give sepahore
+        if(sem_post(resource) == -1){
+            printf("Error while giving semaphore\n");
+            exit(1);
+        }
+    }
+    return NULL;
+}
+
+void *readerJob(void *args) {
+    int divider = *((int *) args);
+    while (wait);
+    for (int i = 0; i < howManyToRead; i++) {
+
+        if(sem_wait(readers) == -1){
+            printf("Error while taking semaphore\n");
+            exit(1);
+        }
+        readersWaiting++;
+
+        if (readersWaiting == 1){
+            if(sem_wait(resource) == -1){
+                printf("Error while taking semaphore\n");
+                exit(1);
+            }
+        }
+
+        if(sem_post(readers) == -1){
+            printf("Error while giving semaphore\n");
+            exit(1);
+        }
+
+        int counter = 0;
+        for (int j = 0; j < ARRAYSIZE; j++) {
+            if (memory[j] % divider == 0) {
+                counter++;
+                if (verbose) {
+                    printf("%lu READER : array[%d] = %d , divider = %d\n", pthread_self(), i, memory[i], divider);
+                }
+            }
+        }
+        printf("%lu READER : %d elements are dividable with %d\n", pthread_self(), counter, divider);
+
+        if(sem_wait(readers) == -1){
+            printf("Error while taking semaphore\n");
+            exit(1);
+        }
+
+        readersWaiting--;
+        if (readersWaiting == 0){
+            if(sem_post(resource) == -1){
+                printf("Error while giving semaphore\n");
+                exit(1);
+            }
+        }
+
+        if(sem_post(readers) == -1){
+            printf("Error while giving semaphore\n");
+            exit(1);
+        }
+    }
+
+    return (void *) 0;
 }
 
