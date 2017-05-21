@@ -1,8 +1,7 @@
 #include "general.h"
 
-#define RANGE 1001
-
 int array[ARRAYSIZE];
+
 pthread_t *readers;
 pthread_t *writers;
 int readersNumber;
@@ -14,8 +13,6 @@ sem_t readerSemaphore;
 sem_t writerSemaphore;
 bool infoMode = false;
 bool wait = true;
-
-bool isNumber(char *string);
 
 void *readerFunction(void *arg);
 
@@ -78,7 +75,7 @@ int main(int argc, char **argv) {
 
     // initialize shared array :
     for (int i = 0; i < ARRAYSIZE; i++) {
-        array[i] = rand() % RANGE;
+        array[i] = rand() % MAXNUMBER;
     }
 
     // create semaphores :
@@ -107,31 +104,35 @@ int main(int argc, char **argv) {
  * czytelnik uruchamiany jest z jednym argumentem - dzielnik i znajduje w tablicy wszystkie liczby,
  * które się przez niego dzielą bez reszty, wykonując cyklicznie operację przeszukiwania tablicy
  */
-// TODO describe it :
 void *readerFunction(void *arg) {
-    while (wait);
-    int divider = *(int *) arg;
+    while(wait);
+    int divider = *((int*)arg);
 
     for (int i = 0; i < howManyToRead; i++) {
-        sem_wait(&readerSemaphore);
 
+        // TODO describe it :
+        sem_wait(&readerSemaphore);
         if (++currentReaders == 1) {
             sem_wait(&writerSemaphore);
         }
-
         sem_post(&readerSemaphore);
+        //
 
+
+        // find how many elements are dividable :
         int counter = 0;
         for (int i = 0; i < ARRAYSIZE; i++) {
             if (array[i] % divider == 0) {
                 counter++;
                 if (infoMode) {
-                    printf("%lu reader: pozycja %d wartosc %d dzielnik %d\n", pthread_self(), i, array[i], divider);
+                    printf("%lu reader: array[%d] = %d , divider = %d\n", pthread_self(), i, array[i], divider);
                 }
             }
         }
-        printf("%lu reader: liczb %d\n", pthread_self(), counter);
+        printf("%lu reader: %d \n", pthread_self(), counter);
 
+
+        // TODO describe it :
         sem_wait(&readerSemaphore);
         if (--currentReaders == 0) {
             sem_post(&writerSemaphore);
@@ -160,7 +161,7 @@ void *writerFunction(void *arg) {
         n = rand() % ARRAYSIZE + 1;
         for (int j = 0; j < n; j++) {
             index = rand() % ARRAYSIZE;
-            value = rand() % RANGE;
+            value = rand() % MAXNUMBER;
             array[index] = value;
             if (infoMode) {
                 printf("%lu writer has changed array[%d] => %d\n", pthread_self(), index, value);
@@ -170,16 +171,4 @@ void *writerFunction(void *arg) {
         sem_post(&writerSemaphore);
         sleep(1);
     }
-}
-
-
-bool isNumber(char *string) {
-    int i = 0;
-    while (string[i] != '\0') {
-        if (string[i] >= '0' && string[i] <= '9')
-            i++;
-        else
-            return false;
-    }
-    return true;
 }

@@ -3,7 +3,7 @@
 
 #define ARRAYSIZE 10
 #define MAXOPERATION 10
-#define MAXNUMBER 10
+#define MAXNUMBER 100
 #define MAXDEVIDER 5
 
 #include <stdio.h>
