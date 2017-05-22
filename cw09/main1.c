@@ -55,7 +55,7 @@ int main(int argc, char *argv[]) {
     }
     memory = mmap(NULL, ARRAYSIZE * sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED, memoryId, 0);
     if(memory == (void *) -1){
-        printf("Error while mapping shared memoryy\n");
+        printf("Error while mapping shared memory\n");
         exit(1);
     }
 
