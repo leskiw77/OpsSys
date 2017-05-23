@@ -1,8 +1,8 @@
 #include "general.h"
 
 void *readerFunction(void *arg);
+
 void *writerFunction(void *arg);
-void createAndStartThreads();
 
 int array[ARRAYSIZE];
 int readersNumber;
@@ -42,16 +42,6 @@ int main(int argc, char **argv) {
         array[i] = rand() % MAXNUMBER;
     }
 
-    // create and start threads :
-    createAndStartThreads();
-
-    // clean :
-    free(readers);
-    free(writers);
-    return 0;
-}
-
-void createAndStartThreads() {
     // create readers and writers :
     readers = malloc(sizeof(pthread_t) * readersNumber);
     writers = malloc(sizeof(pthread_t) * writersNumber);
@@ -82,13 +72,14 @@ void createAndStartThreads() {
             exit(1);
         }
     }
+
+    // clean :
+    free(readers);
+    free(writers);
+    return 0;
 }
 
 
-/*
- * czytelnik uruchamiany jest z jednym argumentem - dzielnik i znajduje w tablicy wszystkie liczby,
- * które się przez niego dzielą bez reszty, wykonując cyklicznie operację przeszukiwania tablicy
- */
 void *readerFunction(void *arg) {
     while (wait);
     int divider = *((int *) arg);
@@ -122,7 +113,6 @@ void *readerFunction(void *arg) {
             pthread_cond_broadcast(&readersQueueCond);
         }
         pthread_mutex_unlock(&mutex);
-
         sleep(1);
     }
     return NULL;
