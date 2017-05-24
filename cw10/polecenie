@@ -1,0 +1,18 @@
+Zadanie 1
+
+Klienci i serwer używają protokołu strumieniowego i komunikacji połączeniowej.
+Klient rejestruje się w serwerze poprzez nawiązanie z nim połączenia. Jeśli w określonym czasie od
+nawiązania połączenia (np. 30 sekund) klient nie wyśle żadnego komunikatu, serwer zamyka połączenie
+z nim i usuwa go z listy klientów.
+
+
+
+
+Zadanie 2
+
+Klienci i serwer używają protokołu datagramowego a komunikacja jest bezpołączeniowa.
+Serwer używa dokładnie jednego soketu z dziedziny Unix oraz dokładnie jednego soketu z dziedziny Internet.
+Serwer rejestruje nowego klienta gdy otrzyma od niego pierwszy komunikat do rozesłania.
+Rejestracja jest ważna przez określony okres czasu (np. 30 sekund) i jest automatycznie odnawiana gdy
+klient wyśle serwerowi kolejny komunikat. Serwer powinien co pewien czas sprawdzać listę klientów i
+usuwać z niej klientów, których okres rejestracji wygasł.
