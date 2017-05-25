@@ -21,6 +21,7 @@ void reactOnClientsRequest(int, int);
 
 
 int main(int argc, char **argv) {
+
     int opt = 1;
 
     signal(SIGINT, clean);
@@ -45,11 +46,12 @@ int main(int argc, char **argv) {
     // not necessary, but recommended
     if (setsockopt(sock_in, SOL_SOCKET, SO_REUSEADDR, (char *) &opt, sizeof(opt)) < 0) {
         printf("setsockopt(): %d: %s\n", errno, strerror(errno));
-        exit(-1);
+        exit(1);
     }
+
     if (setsockopt(sock_ux, SOL_SOCKET, SO_REUSEADDR, (char *) &opt, sizeof(opt)) < 0) {
         printf("setsockopt(): %d: %s\n", errno, strerror(errno));
-        exit(-1);
+        exit(1);
     }
 
     int sd, max_sd;
@@ -105,16 +107,16 @@ int initSockInternetIn() {
     int sock;
     if ((sock = socket(PF_INET, SOCK_DGRAM, 0)) == -1) {
         printf("socket(): %d: %s\n", errno, strerror(errno));
-        exit(-1);
+        exit(1);
     }
-    // ?
+
     server_in.sin_family = AF_INET;
     server_in.sin_port = htons(PORT_NO);
     server_in.sin_addr.s_addr = htonl(INADDR_ANY);
 
     if (bind(sock, (struct sockaddr *) &server_in, sizeof(server_in)) < 0) {
         printf("bind(): %d: %s\n", errno, strerror(errno));
-        exit(-1);
+        exit(1);
     }
 
     printf("[server] inet socket created\n");
@@ -127,7 +129,7 @@ int initSockIUnix() {
 
     if ((sock = socket(PF_UNIX, SOCK_DGRAM, 0)) == -1) {
         printf("socket(): %d: %s\n", errno, strerror(errno));
-        exit(-1);
+        exit(1);
     }
 
     server_ux.sun_family = AF_UNIX;
@@ -135,7 +137,7 @@ int initSockIUnix() {
 
     if (bind(sock, (struct sockaddr *) &server_ux, SUN_LEN(&server_ux)) < 0) {
         printf("bind(): %d: %s\n", errno, strerror(errno));
-        exit(-1);
+        exit(1);
     }
 
     printf("[server] unix socket created\n");
@@ -175,6 +177,7 @@ void reactOnClientsRequest(int socket, int mode) {
         exit(-1);
     }
 
+    // wypisuje co otrzymal od klienta :
     printf("msg: %s %s\n", msg.userName, msg.content);
 
     //inform user of socket number - used in send and receive commands
@@ -187,52 +190,58 @@ void reactOnClientsRequest(int socket, int mode) {
 
     // check if user is logged
     int logged = 0;
-    int i, j = -1;
-    for (i = 0; i < MAX_USERS; i++) {
+    int loggedUser = -1;
+    for (int i = 0; i < MAX_USERS; i++) {
         if (users[i]->socket != -1) {
             if (strcmp(users[i]->name, msg.userName) == 0) {
                 logged = 1;
-                j = i;
+                loggedUser = i;
             }
         } else {
-            if (j == -1) j = i;
+            if (loggedUser == -1) {
+                loggedUser = i;
+            }
         }
     }
 
-    if (j == -1) {
+    if (loggedUser == -1) {
         printf("[server] can't handle new connection - server is full\n");
         strcpy(msg.userName, "[server]");
         strcpy(msg.content, "server is full");
     } else {
         if (!logged) {
             // add user
-            users[j]->mode = mode;
-            strcpy(users[j]->name, msg.userName);
-            users[j]->size = msg.size;
-            users[j]->socket = socket;
-            users[j]->confirmed = 0;
-            gettimeofday(&users[j]->time, NULL);
-            users[j]->sockaddr = (struct sockaddr *) malloc(sizeof(struct sockaddr));
-            memcpy(users[j]->sockaddr, &address, sizeof(address));
-            printf("Adding to list of sockets as %d\n", j);
-            strcpy(msg.userName, "[server]");
+            users[loggedUser]->mode = mode;
+            strcpy(users[loggedUser]->name, msg.userName);
+            users[loggedUser]->size = msg.size;
+            users[loggedUser]->socket = socket;
+            users[loggedUser]->confirmed = 0;
+            gettimeofday(&users[loggedUser]->time, NULL);
+            users[loggedUser]->sockaddr = (struct sockaddr *) malloc(sizeof(struct sockaddr));
+
+            memcpy(users[loggedUser]->sockaddr, &address, sizeof(address));
+
+            printf("Adding to list of sockets as %d\n", loggedUser);
+            strcpy(msg.userName, "[serv1er]");
             strcpy(msg.content, "User registered, type \"confirm\" to confirm.");
+
         } else {
-            if (users[j]->confirmed == 0) {
+
+            if (users[loggedUser]->confirmed == 0) {
                 if (strcmp(msg.content, "confirm") == 0) {
                     // confirm user
                     struct timeval now;
                     gettimeofday(&now, NULL);
-                    printf("time: %f\n", getTimeDiff(users[j]->time, now));
-                    if (getTimeDiff(users[j]->time, now) > TIMEOUT) {
+                    printf("time: %f\n", getTimeDiff(users[loggedUser]->time, now));
+                    if (getTimeDiff(users[loggedUser]->time, now) > TIMEOUT) {
                         // delete user
-                        users[j]->socket = -1;
-                        strcpy(users[j]->name, "-");
+                        users[loggedUser]->socket = -1;
+                        strcpy(users[loggedUser]->name, "-");
                         strcpy(msg.userName, "[server]");
                         strcpy(msg.content, "too late for confirmation");
                     } else {
                         // confirm
-                        users[j]->confirmed = 1;
+                        users[loggedUser]->confirmed = 1;
                         strcpy(msg.userName, "[server]");
                         strcpy(msg.content, "successfully confirmed");
                     }
@@ -268,7 +277,7 @@ void reactOnClientsRequest(int socket, int mode) {
     //send new connection message
     if (sendto(socket, &msg, sizeof(msg), 0, &address, addrlen) == -1) {
         printf("sendto(): %d: %s\n", errno, strerror(errno));
-        exit(-1);
+        exit(1);
     }
 
     printf("\n");

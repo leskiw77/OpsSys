@@ -1,12 +1,10 @@
 #include "commons.h"
 
 typedef struct ThreadArguments {
-
     int socket;
     struct sockaddr *server;
     socklen_t server_size;
     Message msg;
-
 } ThreadArguments;
 
 void *threadFunction(void *);
@@ -16,7 +14,7 @@ int getInternetSocket(char *);
 int getUnixSocket(void);
 
 char *CLIENT_NAME;
-struct sockaddr * server;
+struct sockaddr *server;
 socklen_t server_size;
 struct sockaddr_un server_un;
 struct sockaddr_un sock_un;
@@ -29,7 +27,7 @@ int main(int argc, char *argv[]) {
     // parse args :
     if (argc != 3) {
         printf("usage: %s [CLIENT_NAME] [-u (Unit) | -i (Internet) ]\n", argv[0]);
-        return 1;
+        exit(1);
     }
 
     // set signals :
@@ -54,16 +52,11 @@ int main(int argc, char *argv[]) {
         fgets(buffer, 99, stdin);
         buffer[strlen(buffer)] = '\0';
 
-
-        //
         printf("TEMPORARY END HERE\n\n");
         return 1;
-        //
-
         sock = getInternetSocket(buffer);
     } else {
-        printf("Wrong socket type\n"
-                       "usage: [-u | -i]\n");
+        printf("Wrong socket type\nusage: [-u | -i]\n");
         exit(1);
     }
 
@@ -85,14 +78,14 @@ int main(int argc, char *argv[]) {
     // create thread for client :
     if (pthread_create(&thread, NULL, &threadFunction, (void *) params) < 0) {
         printf("pthread_create(): %d: %s\n", errno, strerror(errno));
-        exit(-1);
+        exit(1);
     }
 
     // registration message to server
     strcpy(msg.content, "Registration message");
     if (sendto(sock, &msg, sizeof(msg), 0, server, server_size) == -1) {
         printf("sendto(): %d: %s\n", errno, strerror(errno));
-        exit(-1);
+        exit(1);
     }
 
     while (1) {
@@ -102,13 +95,13 @@ int main(int argc, char *argv[]) {
         // send the message
         if (sendto(sock, &msg, sizeof(msg), 0, server, server_size) == -1) {
             printf("sendto(): %d: %s\n", errno, strerror(errno));
-            exit(-1);
+            exit(1);
         }
     }
 
     if (pthread_join(thread, NULL)) {
         printf("pthread_join(): %d: %s\n", errno, strerror(errno));
-        exit(-1);
+        exit(1);
     }
 
     close(sock);
@@ -117,30 +110,25 @@ int main(int argc, char *argv[]) {
 
 
 void clean(int arg) {
-
     char path[256] = {0};
     sprintf(path, "/tmp/s%d", getpid());
     unlink(path);
-
     printf("[client] clean\n");
-
     exit(0);
 }
 
 
 void *threadFunction(void *args) {
     ThreadArguments *params = (ThreadArguments *) args;
-
     while (1) {
         // receive data from server :
-        if (recvfrom(params->socket, &params->msg, sizeof(params->msg),
-                     0, params->server, &params->server_size) == -1) {
+        if (recvfrom(params->socket, &params->msg, sizeof(params->msg), 0,
+                     params->server, &params->server_size) == -1) {
             printf("recvfrom(): %d: %s\n", errno, strerror(errno));
-            exit(-1);
+            exit(1);
         }
         printf("<%s>: %s\n", params->msg.userName, params->msg.content);
     }
-
     return NULL;
 }
 
@@ -148,7 +136,7 @@ void *threadFunction(void *args) {
 int getInternetSocket(char *address) {
     int sock;
 
-    struct sockaddr_in * sock_in = malloc(sizeof(struct sockaddr_in));
+    struct sockaddr_in *sock_in = malloc(sizeof(struct sockaddr_in));
     sock_in->sin_family = AF_INET;
     sock_in->sin_port = htons(PORT_NO);
 
@@ -161,8 +149,8 @@ int getInternetSocket(char *address) {
         exit(1);
     }
 
-    server = (struct sockaddr *) sock_in;
-    server_size = sizeof(*sock_in);
+    server = (struct sockaddr *)sock_in;
+    server_size = (sizeof(*sock_in));
 
     return sock;
 }

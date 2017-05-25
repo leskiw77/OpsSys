@@ -36,19 +36,21 @@
 #include <sys/time.h>
 
 typedef struct User {
-	int mode;
-	int confirmed;
-	size_t size;
-	char name[MAX_NAME_LENGTH];
-	int socket;
-	struct sockaddr * sockaddr;
-	struct timeval time;
+    int mode;
+    int confirmed;
+    size_t size;
+    char name[MAX_NAME_LENGTH];
+    int socket;
+    struct sockaddr *sockaddr;
+    struct timeval time;
 } User;
 
 typedef struct Message {
-	size_t size;
-	char userName[MAX_NAME_LENGTH];
-	char content[MAX_MSG_LENGTH];
-}  Message;
+    size_t size;
+    char userName[MAX_NAME_LENGTH];
+    char content[MAX_MSG_LENGTH];
+    int arg1;
+    int arg2;
+} Message;
 
 #endif
