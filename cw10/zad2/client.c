@@ -53,14 +53,13 @@ int main(int argc, char *argv[]) {
         buffer[strlen(buffer)] = '\0';
 
         printf("TEMPORARY END HERE\n\n");
-        return 1;
+        return 0;
         sock = getInternetSocket(buffer);
     } else {
         printf("Wrong socket type\nusage: [-u | -i]\n");
         exit(1);
     }
 
-    // ?
     Message msg;
     msg.size = server_size;
     strcpy(msg.userName, CLIENT_NAME);
@@ -170,17 +169,14 @@ int getUnixSocket() {
         exit(1);
     }
 
-    // ? :
     sock_un.sun_family = AF_UNIX;
     strcpy(sock_un.sun_path, path);
 
-    // ? :
     if (bind(sock, (struct sockaddr *) &sock_un, SUN_LEN(&sock_un)) < 0) {
         printf("pthread_create(): %d: %s\n", errno, strerror(errno));
         exit(1);
     }
 
-    // ? :
     server_un.sun_family = AF_UNIX;
     strcpy(server_un.sun_path, SERVER_PATH);
     printf("path: %s\n", server_un.sun_path);

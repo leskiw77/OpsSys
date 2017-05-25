@@ -14,6 +14,11 @@
 #define SERVER_PATH "./socket"
 #define PORT_NO 9066
 
+#define ADD 0
+#define SUB 1
+#define MUL 2
+#define DIV 3
+
 #include <sys/resource.h>
 #include <sys/sysinfo.h>
 #include <netinet/in.h>
@@ -50,6 +55,7 @@ typedef struct Message {
     size_t size;
     char userName[MAX_NAME_LENGTH];
     char content[MAX_MSG_LENGTH];
+    int math;
     int arg1;
     int arg2;
 } Message;
