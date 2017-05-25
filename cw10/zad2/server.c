@@ -35,7 +35,7 @@ int main(int argc, char **argv) {
         users[i]->size = -1;
         users[i]->mode = -1;
         users[i]->socket = -1;
-        users[i]->confirmed = 0;
+        //users[i]->confirmed = 0;
         users[i]->sockaddr = NULL;
     }
 
@@ -189,87 +189,57 @@ void reactOnClientsRequest(int socket, int mode) {
     printf("UserID: %s, content: %s\n", msg.userName, msg.content);
 
     // check if user is logged
-    int logged = 0;
-    int loggedUser = -1;
-    for (int i = 0; i < MAX_USERS; i++) {
-        if (users[i]->socket != -1) {
-            if (strcmp(users[i]->name, msg.userName) == 0) {
-                logged = 1;
-                loggedUser = i;
-            }
-        } else {
-            if (loggedUser == -1) {
-                loggedUser = i;
-            }
+    bool logged = false;
+    int usrIndex = -1;
+    int i;
+    for (i = 0; i < MAX_USERS; i++) {
+        if (users[i]->socket != -1 && strcmp(users[i]->name, msg.userName) == 0) {
+            logged = true;
+            usrIndex = i;
+            break;
+        } else if (users[i]->socket == -1) {
+            usrIndex = i;
         }
     }
 
-    if (loggedUser == -1) {
+    if (usrIndex == -1) {
         printf("[server] can't handle new connection - server is full\n");
         strcpy(msg.userName, "[server]");
         strcpy(msg.content, "server is full");
     } else {
+        // add new user :
         if (!logged) {
-            // add user
-            users[loggedUser]->mode = mode;
-            strcpy(users[loggedUser]->name, msg.userName);
-            users[loggedUser]->size = msg.size;
-            users[loggedUser]->socket = socket;
-            users[loggedUser]->confirmed = 0;
-            gettimeofday(&users[loggedUser]->time, NULL);
-            users[loggedUser]->sockaddr = (struct sockaddr *) malloc(sizeof(struct sockaddr));
+            users[usrIndex]->mode = mode;
+            strcpy(users[usrIndex]->name, msg.userName);
+            users[usrIndex]->size = msg.size;
+            users[usrIndex]->socket = socket;
+            //users[usrIndex]->confirmed = 0;
+            gettimeofday(&users[usrIndex]->time, NULL);
+            users[usrIndex]->sockaddr = (struct sockaddr *) malloc(sizeof(struct sockaddr));
 
-            memcpy(users[loggedUser]->sockaddr, &address, sizeof(address));
+            memcpy(users[usrIndex]->sockaddr, &address, sizeof(address));
 
-            printf("Adding to list of sockets as %d\n", loggedUser);
+            printf("Adding to list of sockets as %d\n", usrIndex);
             strcpy(msg.userName, "[serv1er]");
             strcpy(msg.content, "User registered, type \"confirm\" to confirm.");
 
         } else {
+            // send message to logged user :
+            Message msg_to_sent;
+            strcpy(msg_to_sent.userName, msg.userName);
+            strcpy(msg_to_sent.content, msg.content);
+            strcpy(msg.userName, "[server]");
+            strcpy(msg.content, "result from server");
 
-            if (users[loggedUser]->confirmed == 0) {
-                if (strcmp(msg.content, "confirm") == 0) {
-                    // confirm user
-                    struct timeval now;
-                    gettimeofday(&now, NULL);
-                    printf("time: %f\n", getTimeDiff(users[loggedUser]->time, now));
-                    if (getTimeDiff(users[loggedUser]->time, now) > TIMEOUT) {
-                        // delete user
-                        users[loggedUser]->socket = -1;
-                        strcpy(users[loggedUser]->name, "-");
-                        strcpy(msg.userName, "[server]");
-                        strcpy(msg.content, "too late for confirmation");
-                    } else {
-                        // confirm
-                        users[loggedUser]->confirmed = 1;
-                        strcpy(msg.userName, "[server]");
-                        strcpy(msg.content, "successfully confirmed");
-                    }
-                } else {
-                    strcpy(msg.userName, "[server]");
-                    strcpy(msg.content, "user is not confirmed - type 'confirm'");
-                }
-            } else {
-                Message msg_to_sent;
-                strcpy(msg_to_sent.userName, msg.userName);
-                strcpy(msg_to_sent.content, msg.content);
-                strcpy(msg.userName, "[server]");
-                strcpy(msg.content, "message sent to other users");
+            // sending message :
+            if (sendto(users[usrIndex]->socket, &msg_to_sent, sizeof(msg_to_sent), 0,
+                       users[usrIndex]->sockaddr, users[usrIndex]->size) == -1) {
+                printf("[server] can't send message to user#%d\n", i);
+                printf("[server] deleting %d user\n", i);
 
-                for (i = 0; i < MAX_USERS; i++) {
-                    if (users[i]->socket != -1 && strcmp(users[i]->name, msg_to_sent.userName) != 0
-                        && users[i]->confirmed == 1) {
-                        printf("sent message to: %d\n", i);
-                        if (sendto(users[i]->socket, &msg_to_sent, sizeof(msg_to_sent), 0,
-                                   users[i]->sockaddr, users[i]->size) == -1) {
-                            printf("[server] can't send message to user#%d\n", i);
-                            printf("[server] deleting %d user\n", i);
-                            // delete
-                            users[i]->socket = -1;
-                            strcpy(users[i]->name, "-");
-                        }
-                    }
-                }
+                // delete
+                users[usrIndex]->socket = -1;
+                strcpy(users[usrIndex]->name, "-");
             }
         }
     }

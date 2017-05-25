@@ -34,10 +34,11 @@
 #include <netdb.h>
 #include <stdio.h>
 #include <sys/time.h>
+#include <stdbool.h>
 
 typedef struct User {
     int mode;
-    int confirmed;
+    //int confirmed;
     size_t size;
     char name[MAX_NAME_LENGTH];
     int socket;
