@@ -1,10 +1,7 @@
-#ifndef UTILS_H
-#define UTILS_H
-
-#define MAX_CLIENTS 32
+#define MAX_CLIENTS 16
 #define MAX_NAME_LENGTH 32
 
-typedef enum operator {
+typedef enum Operator {
 	ADD = 1,
 	SUBTRACT = 2,
 	MULTIPLY = 3,
@@ -14,21 +11,18 @@ typedef enum operator {
 	EXIT = 7,
 	ACCEPT = 8,
 	DENY = 9
-} operator;
+} Operator;
 
-typedef struct operation {
+typedef struct Operation {
 	int arg1;
 	int arg2;
-	int arg3;
+	int result;
 	char name[MAX_NAME_LENGTH];
-	operator op;
-} operation;
+	Operator op;
+} Operation;
 
 
 typedef struct client {
 	char name[MAX_NAME_LENGTH];
 	int fd;
 } client;
-
-
-#endif

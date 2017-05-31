@@ -26,12 +26,12 @@ int pinged[MAX_CLIENTS];
 int listen_fd[2];
 pthread_t threads[3];
 
-char to_string(operator o);
+char toString(Operator o);
 int randomClient();
 int getEmpty();
-operation * parseData(char data[1000]);
+Operation * parseData(char data[1000]);
 void *terminalThread(void *arg);
-void handleResult(operation o);
+void handleResult(Operation o);
 void *listenerThread(void *arg);
 void *pingingThread(void *arg);
 void parseArgs(int argc, char **argv);
@@ -39,7 +39,7 @@ void init();
 void exitHandle(int s);
 
 int main(int argc, char **argv) {
-    // parse args :
+    // PARSE ARGUMENTS :
     if (argc != 3) {
         printf("Wrong arguments.\nUsage:\n./server (TCP/UDP port) (UNIX socket path)\n");
         exit(1);
@@ -48,7 +48,7 @@ int main(int argc, char **argv) {
     socket_path = malloc(strlen(argv[2]) + 1);
     strcpy(socket_path, argv[2]);
 
-    // init :
+    // INIT :
     srand(time(NULL));
     for (int i = 0; i < MAX_CLIENTS; i++) {
         strcpy(clients[i].name, "");
@@ -65,11 +65,11 @@ int main(int argc, char **argv) {
     struct sockaddr_in addr_in;
     struct sockaddr_un addr_un;
 
-    // internet listener :
+    // INTERNET LISTENER:
     listen_fd[0] = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
     pfd[MAX_CLIENTS].fd = listen_fd[0];
 
-    // unix listener :
+    // UNIX LISTENER :
     listen_fd[1] = socket(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0);
     pfd[MAX_CLIENTS + 1].fd = listen_fd[1];
 
@@ -81,11 +81,11 @@ int main(int argc, char **argv) {
     addr_un.sun_family = AF_UNIX;
     strcpy(addr_un.sun_path, socket_path);
 
-    // binding listeners :
+    // BINDING LISTENERS :
     bind(listen_fd[0], (struct sockaddr *) &addr_in, sizeof(struct sockaddr_in));
     bind(listen_fd[1], (struct sockaddr *) &addr_un, sizeof(struct sockaddr_un));
 
-    // creating proper threads :
+    // CREATING PROPER THREADS :
     if (pthread_create(&threads[0], NULL, listenerThread, NULL) != 0) {
         printf("Error while creating thread.\n");
         exit(1);
@@ -101,14 +101,14 @@ int main(int argc, char **argv) {
         exit(1);
     }
 
-    // joining threads :
+    // JOINING THREADS :
     for (int i = 0; i < 3; i++) {
         pthread_join(threads[i], NULL);
     }
     return 0;
 }
 
-char to_string(operator o) {
+char toString(Operator o) {
     if (o == ADD) return '+';
     if (o == SUBTRACT) return '-';
     if (o == MULTIPLY) return '*';
@@ -120,21 +120,26 @@ int randomClient() {
     int t[MAX_CLIENTS];
     int id = 0;
     for (int i = 0; i < MAX_CLIENTS; i++) {
-        if (clients[i].fd > 0) t[id++] = i;
+        if (clients[i].fd > 0) {
+            t[id++] = i;
+        }
     }
-    if (id == 0) return -1;
+    if (id == 0) {
+        return -1;
+    }
     return t[rand() % id];
 }
 
 int getEmpty() {
-    for (int i = 0; i < MAX_CLIENTS; i++)
+    for (int i = 0; i < MAX_CLIENTS; i++) {
         if (clients[i].fd <= 0) {
             return i;
         }
+    }
     return -1;
 }
 
-operation * parseData(char data[1000]) {
+Operation * parseData(char data[1000]) {
     char num1[25];
     char num2[25];
     char op;
@@ -148,7 +153,7 @@ operation * parseData(char data[1000]) {
     }
     num2[j - i - 1] = num1[i - 1] = '\0';
 
-    operation *o = malloc(sizeof(operation));
+    Operation *o = malloc(sizeof(Operation));
     o->arg1 = atoi(num1);
     o->arg2 = atoi(num2);
     if (op == '+') {
@@ -163,9 +168,11 @@ operation * parseData(char data[1000]) {
     return o;
 }
 
-void *terminalThread(void *arg) {
+
+// READ LINES AND SEND REQUEST TO RANDOM CLIENT :
+void * terminalThread(void *arg) {
     char buf[1000];
-    operation *op;
+    Operation *op;
     while (1) {
         fgets(buf, 1000, stdin);
         op = parseData(buf);
@@ -175,24 +182,26 @@ void *terminalThread(void *arg) {
             continue;
         }
         int fd = clients[id].fd;
-        write(fd, (void *) op, sizeof(operation));
+        write(fd, (void *) op, sizeof(Operation));
         free(op);
     }
     return NULL;
 }
 
-void handleResult(operation o) {
+// RECEIVE RESPONSE FROM CLIENT :
+void handleResult(Operation o) {
     if (o.op == ADD || o.op == SUBTRACT || o.op == DIVIDE || o.op == MULTIPLY) {
-        printf("%d%c%d=%d (calculated by client %s)\n", o.arg1, to_string(o.op), o.arg2, o.arg3, o.name);
+        printf("%d%c%d=%d (calculated by client %s)\n", o.arg1, toString(o.op), o.arg2, o.result, o.name);
     } else if (o.op == PING) {
         int i;
-        for (i = 0; i < MAX_CLIENTS; i++) {
-            if (strcmp(clients[i].name, o.name) == 0) {
+        for(i = 0; i < MAX_CLIENTS; i++) {
+            if(strcmp(clients[i].name, o.name) == 0) {
                 break;
             }
         }
         pinged[i] = 0;
     } else if (o.op == EXIT) {
+        // CLIENT EXITING :
         int i;
         for (i = 0; i < MAX_CLIENTS; i++) {
             if (strcmp(clients[i].name, o.name) == 0) {
@@ -203,15 +212,21 @@ void handleResult(operation o) {
     }
 }
 
-void *listenerThread(void *arg) {
+// LISTEN TO SOCKETS :
+void * listenerThread(void *arg) {
     listen(listen_fd[0], MAX_CLIENTS);
     listen(listen_fd[1], MAX_CLIENTS);
     int f;
-    operation o;
+    Operation o;
     char buf[1024];
     while (1) {
-        for (int i = 0; i < MAX_CLIENTS; i++) pfd[i].events = POLLIN;
+
+        for (int i = 0; i < MAX_CLIENTS; i++) {
+            pfd[i].events = POLLIN;
+        }
+
         poll(pfd, MAX_CLIENTS + 2, -1);
+
         for (int i = 0; i < MAX_CLIENTS; i++) {
             if ((pfd[i].revents & (POLLRDHUP | POLLHUP)) != 0) {
                 pfd[i].fd = -1;
@@ -219,13 +234,14 @@ void *listenerThread(void *arg) {
                 strcpy(clients[i].name, "");
                 pinged[i] = 0;
             } else if ((pfd[i].revents & POLLIN) != 0) {
-                read(pfd[i].fd, buf, sizeof(operation));
-                handleResult(*(operation *) buf);
+                read(pfd[i].fd, buf, sizeof(Operation));
+                handleResult(*(Operation *) buf);
             }
         }
+
         while ((f = accept(pfd[MAX_CLIENTS].fd, NULL, NULL)) > 0) {
-            read(f, buf, sizeof(operation));
-            o = *(operation *) buf;
+            read(f, buf, sizeof(Operation));
+            o = *(Operation *) buf;
             int id = getEmpty();
             for (int i = 0; i < MAX_CLIENTS; i++) {
                 if (clients[i].fd > 0 && strcmp(clients[i].name, o.name) == 0) {
@@ -234,20 +250,21 @@ void *listenerThread(void *arg) {
             }
             if (id < 0) {
                 o.op = DENY;
-                write(f, (void *) &o, sizeof(operation));
+                write(f, (void *) &o, sizeof(Operation));
                 shutdown(f, SHUT_RDWR);
                 close(f);
                 break;
             }
             o.op = ACCEPT;
-            write(f, (void *) &o, sizeof(operation));
+            write(f, (void *) &o, sizeof(Operation));
             pfd[id].fd = f;
             strcpy(clients[id].name, o.name);
             clients[id].fd = f;
         }
+
         while ((f = accept(pfd[MAX_CLIENTS + 1].fd, NULL, NULL)) > 0) {
-            read(f, buf, sizeof(operation));
-            o = *(operation *) buf;
+            read(f, buf, sizeof(Operation));
+            o = *(Operation *) buf;
             int id = getEmpty();
             for (int i = 0; i < MAX_CLIENTS; i++) {
                 if (clients[i].fd > 0 && strcmp(clients[i].name, o.name) == 0) {
@@ -256,23 +273,25 @@ void *listenerThread(void *arg) {
             }
             if (id < 0) {
                 o.op = DENY;
-                write(f, (void *) &o, sizeof(operation));
+                write(f, (void *) &o, sizeof(Operation));
                 shutdown(f, SHUT_RDWR);
                 close(f);
                 break;
             }
             o.op = ACCEPT;
-            write(f, (void *) &o, sizeof(operation));
+            write(f, (void *) &o, sizeof(Operation));
             pfd[id].fd = f;
             strcpy(clients[id].name, o.name);
             clients[id].fd = f;
         }
     }
-    return (void *) NULL;
+    return NULL;
 }
 
+
+// PINGING THREAD ???????????????????????????????? CZEMU ????????????????????????????
 void *pingingThread(void *arg) {
-    operation op;
+    Operation op;
     op.op = PING;
     while (1) {
         for (int i = 0; i < MAX_CLIENTS; i++) {
@@ -287,7 +306,7 @@ void *pingingThread(void *arg) {
                     pinged[i] = 0;
                     continue;
                 }
-                write(clients[i].fd, (void *) &op, sizeof(operation));
+                write(clients[i].fd, (void *) &op, sizeof(Operation));
                 pinged[i] = 1;
             }
         }
