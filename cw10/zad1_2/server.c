@@ -39,18 +39,41 @@ void init();
 void exitHandle(int s);
 
 int main(int argc, char **argv) {
-    parseArgs(argc, argv);
-    init();
+    // parse args :
+    if (argc != 3) {
+        printf("Wrong arguments.\nUsage:\n./server (TCP/UDP port) (UNIX socket path)\n");
+        exit(1);
+    }
+    port = atoi(argv[1]);
+    socket_path = malloc(strlen(argv[2]) + 1);
+    strcpy(socket_path, argv[2]);
+
+    // init :
+    srand(time(NULL));
+    for (int i = 0; i < MAX_CLIENTS; i++) {
+        strcpy(clients[i].name, "");
+        clients[i].fd = -1;
+        pfd[i].fd = -1;
+        pfd[i].events = POLLRDHUP;
+        pinged[i] = 0;
+    }
+    pfd[MAX_CLIENTS].events = POLLIN;
+    pfd[MAX_CLIENTS + 1].events = POLLIN;
+
     signal(SIGINT, exitHandle);
 
     struct sockaddr_in addr_in;
     struct sockaddr_un addr_un;
 
+    // internet listener :
     listen_fd[0] = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
     pfd[MAX_CLIENTS].fd = listen_fd[0];
+
+    // unix listener :
     listen_fd[1] = socket(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0);
     pfd[MAX_CLIENTS + 1].fd = listen_fd[1];
 
+    // ?
     addr_in.sin_family = AF_INET;
     addr_in.sin_addr.s_addr = htonl(INADDR_ANY);
     addr_in.sin_port = htons(port);
@@ -58,9 +81,11 @@ int main(int argc, char **argv) {
     addr_un.sun_family = AF_UNIX;
     strcpy(addr_un.sun_path, socket_path);
 
+    // binding listeners :
     bind(listen_fd[0], (struct sockaddr *) &addr_in, sizeof(struct sockaddr_in));
     bind(listen_fd[1], (struct sockaddr *) &addr_un, sizeof(struct sockaddr_un));
 
+    // creating proper threads :
     if (pthread_create(&threads[0], NULL, listenerThread, NULL) != 0) {
         printf("Error while creating thread.\n");
         exit(1);
@@ -75,7 +100,11 @@ int main(int argc, char **argv) {
         printf("Error while creating thread.\n");
         exit(1);
     }
-    for (int i = 0; i < 3; i++) pthread_join(threads[i], NULL);
+
+    // joining threads :
+    for (int i = 0; i < 3; i++) {
+        pthread_join(threads[i], NULL);
+    }
     return 0;
 }
 
@@ -99,7 +128,9 @@ int randomClient() {
 
 int getEmpty() {
     for (int i = 0; i < MAX_CLIENTS; i++)
-        if (clients[i].fd <= 0) return i;
+        if (clients[i].fd <= 0) {
+            return i;
+        }
     return -1;
 }
 
@@ -108,18 +139,27 @@ operation * parseData(char data[1000]) {
     char num2[25];
     char op;
     int i, j;
-    for (i = 0; i < strlen(data) && data[i] >= '0' && data[i] <= '9'; i++) num1[i] = data[i];
+    for (i = 0; i < strlen(data) && data[i] >= '0' && data[i] <= '9'; i++) {
+        num1[i] = data[i];
+    }
     op = data[i++];
-    for (j = i; j < strlen(data); j++) num2[j - i] = data[j];
+    for (j = i; j < strlen(data); j++) {
+        num2[j - i] = data[j];
+    }
     num2[j - i - 1] = num1[i - 1] = '\0';
 
     operation *o = malloc(sizeof(operation));
     o->arg1 = atoi(num1);
     o->arg2 = atoi(num2);
-    if (op == '+') o->op = ADD;
-    else if (op == '-') o->op = SUBTRACT;
-    else if (op == '*') o->op = MULTIPLY;
-    else if (op == '/') o->op = DIVIDE;
+    if (op == '+') {
+        o->op = ADD;
+    } else if (op == '-') {
+        o->op = SUBTRACT;
+    } else if (op == '*') {
+        o->op = MULTIPLY;
+    } else if (op == '/') {
+        o->op = DIVIDE;
+    }
     return o;
 }
 
@@ -256,28 +296,6 @@ void *pingingThread(void *arg) {
     return NULL;
 }
 
-void parseArgs(int argc, char **argv) {
-    if (argc != 3) {
-        printf("Wrong arguments.\nUsage:\n./server (TCP/UDP port) (UNIX socket path)\n");
-        exit(1);
-    }
-    port = atoi(argv[1]);
-    socket_path = malloc(strlen(argv[2]) + 1);
-    strcpy(socket_path, argv[2]);
-}
-
-void init() {
-    srand(time(NULL));
-    for (int i = 0; i < MAX_CLIENTS; i++) {
-        strcpy(clients[i].name, "");
-        clients[i].fd = -1;
-        pfd[i].fd = -1;
-        pfd[i].events = POLLRDHUP;
-        pinged[i] = 0;
-    }
-    pfd[MAX_CLIENTS].events = POLLIN;
-    pfd[MAX_CLIENTS + 1].events = POLLIN;
-}
 
 void exitHandle(int s) {
     unlink(socket_path);
