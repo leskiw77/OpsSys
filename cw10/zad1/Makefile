@@ -1,10 +1,15 @@
-CC = gcc -Wall -ansi -pedantic -std=c11 -pthread
-P1 = server client
+CC=gcc
+CFLAGS= -ansi -pedantic -std=c11 -Wall
 
-all: clean $(P1) 
+all : client server
+
+client  :
+	$(CC) -o client client.c -lpthread -lrt
+
+server  :
+	$(CC) -o server server.c -lpthread -lrt
 
 clean:
-	rm -f $(P1)
+	rm -f gen client server
 
-$(P1):
-	$(CC) $@.c -o $@
+.PHONY: clean run

@@ -1,171 +1,136 @@
-#include "commons.h"
-//------------------------------------------------------------------------------
-typedef struct threadParams {
-   int socket;
-   Message msg;
-} threadParams;
-//------------------------------------------------------------------------------
-char* CLIENT_ID;
-int type = 0;	// 0 - unix, 1 - internet
-//------------------------------------------------------------------------------
-void clean(int);
-void* run(void*);
-int getInternetSocket(char*, int);
-int getUnixSocket(char*);
-//------------------------------------------------------------------------------
-int main(int argc, char* argv[]) {
-  if(argc != 3) {
-		printf("usage: %s [CLIENT_ID] [-u | -i]\n", argv[0]);
-		return 0;
-	}
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <netinet/in.h>
+#include <netdb.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <errno.h>
+#include <arpa/inet.h> 
+#include <signal.h>
+#include <sys/un.h>
+#include "structs.h"
 
-  signal(SIGINT, clean);
+#define NETWORK 0
+#define LOCAL 1
 
-	CLIENT_ID = argv[1];
-  int sock;
-  char buffer[MAX_NAME_LENGTH];
+int fd = -1;
+char name[MAX_NAME_LENGTH];
+char* address;
+char* path;
+int port;
+int type;
 
-
-  if(strcmp(argv[2], "-u") == 0) {
-    //c = 'u';
-    type = 0;
-    sock = getUnixSocket(SERVER_PATH);
-
-  } else if (strcmp(argv[2], "-i") == 0) {
-    type = 1;
-    printf("\nINET> Enter server address: ");
-    fgets(buffer, 99, stdin);
-    buffer[strlen(buffer)] = '\0';
-
-    // get internet socket
-    sock = getInternetSocket(buffer, PORT_NO);
-  } else {
-    printf("Wrong socket type\n"
-            "usage: [-u | -i]\n");
-    exit(-1);
-  }
-
-	Message msg;
-	strcpy(msg.name, CLIENT_ID);
-
-	// create thread for receiving message
-	pthread_t thread;
-
-	threadParams* params = (threadParams*)malloc(sizeof(threadParams));
-	params->socket = sock;
-	params->msg = msg;
-
-	if(pthread_create(&thread, NULL, &run, (void*)params) < 0) {
-    printf("pthread_create(): %d: %s\n", errno, strerror(errno));
-    exit(-1);
-  }
-
-  strcpy(msg.content, "Registration message");
-  if(send(sock, &msg, sizeof(msg) , 0)==-1) {
-    printf("send(): %d: %s\n", errno, strerror(errno));
-    exit(-1);
-  }
-	while(1) {
-    fgets(msg.content, MAX_MSG_LENGTH, stdin);
-    //send the message
-    if(send(sock, &msg, sizeof(msg) , 0)==-1) {
-      printf("send(): %d: %s\n", errno, strerror(errno));
-      exit(-1);
-    }
-  }
-
-  if(pthread_join(thread, NULL)) {
-    printf("pthread_join(): %d: %s\n", errno, strerror(errno));
-    exit(-1);
-  }
-
-	close(sock);
-
-	return 0;
+char to_string(operator o) {
+	if(o == ADD) return '+';
+	if(o == SUBTRACT) return '-';
+	if(o == MULTIPLY) return '*';
+	if(o == DIVIDE) return '/';
+	return '\0';
 }
 
-//------------------------------------------------------------------------------
-void clean(int arg) {
-  char path[256] = {0};
-	sprintf(path, "/tmp/s%d", getpid());
-	unlink(path);
+void parse_args(int argc, char** argv) {
+	if(argc < 4) {
+		printf("Wrong arguments.\n args:\n ./client name network/local address [port]\n");
+		exit(1);
+	}
+	strcpy(name, argv[1]);
+	if(strcmp(argv[2], "network") == 0) {
+		type = NETWORK;
+		address = malloc(strlen(argv[3]) + 1);
+		strcpy(address, argv[3]);
+		port = atoi(argv[4]);
+	}
+	else if(strcmp(argv[2], "local") == 0) {
+		type = LOCAL;
+		path = malloc(strlen(argv[3]) + 1);
+		strcpy(path, argv[3]);
+	}
+	else {
+		printf("Wrong arguments.\nUsage:\n./client name network/local address [port]\n");
+		exit(1);
+	}
+}
 
-  printf("[client] clean\n");
+void calculate(operation *o) {
+	if(o -> op == ADD) o -> arg3 = o -> arg1 + o -> arg2;
+	if(o -> op == SUBTRACT) o->arg3 = o->arg1 - o->arg2;
+	if(o -> op == MULTIPLY) o->arg3 = o->arg1 * o->arg2;
+	if(o -> op == DIVIDE) o->arg3 = o->arg1 / o->arg2;
+}
 
+void exit_handle(int s) {
+	operation o;
+	o.op = EXIT;
+	write(fd, (void*)&o, sizeof(o));
+	shutdown(fd, SHUT_RDWR);
 	exit(0);
 }
 
-//------------------------------------------------------------------------------
-void* run(void* args) {
-	threadParams* params = (threadParams*) args;
+int main(int argc, char** argv) {
+	parse_args(argc, argv);
+	signal(SIGINT, exit_handle);
+    char buf[1024];
+    
+	operation op; 
+	
+	if(type == NETWORK) {
+		struct sockaddr_in addr;
+		fd = socket(AF_INET, SOCK_STREAM, 0);
+    	if(fd < 0) {
+        	printf("Error while creating socket.\n");
+        	exit(1);
+    	} 
+	
+    	addr.sin_family = AF_INET;
+    	addr.sin_port = htons(port); 
 
-	while(1) {
-		//try to receive some data, this is a blocking call
-		if(recv(params->socket, &params->msg, sizeof(params->msg), 0) == -1) {
-      printf("recv(): %d: %s\n", errno, strerror(errno));
-      exit(-1);
-    }
-		printf("<%s>: %s\n", params->msg.name, params->msg.content);
+    	if(inet_pton(AF_INET, address, &addr.sin_addr) <= 0) {
+        	printf("Error while transforming addres.\n");
+        	exit(1);
+    	} 
+		if(connect(fd, (struct sockaddr*)&addr, sizeof(struct sockaddr_in)) < 0) {
+      	 	printf("Error while connecting to sever.\n");
+			exit(1);
+    	}
 	}
-	return NULL;
-}
-
-//------------------------------------------------------------------------------
-int getInternetSocket(char* address, int port) {
-	struct sockaddr_in sock_in;
-	int sock;
-
-	if((sock = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
-    printf("socket(): %d: %s\n", errno, strerror(errno));
-    exit(-1);
-  }
-
-	sock_in.sin_family = AF_INET;
-  sock_in.sin_port = htons(port);
-
-  sock_in.sin_addr.s_addr = inet_addr((strncmp(address, "localhost", 9) == 0) ? "127.0.0.1" : address);
-
-  if(connect(sock, (struct sockaddr*)&sock_in, sizeof(struct sockaddr)) < 0) {
-    printf("connect(): %d: %s\n", errno, strerror(errno));
-    exit(-1);
-  }
-
-  return sock;
-}
-
-//------------------------------------------------------------------------------
-
-int getUnixSocket(char* file) {
-	struct sockaddr_un server_un;
-	struct sockaddr_un sock_un;
-
-  char path[256] = {0};
-	int sock;
-	sprintf(path, "/tmp/s%d", getpid());
-
-	path[strlen(path)] = '\0';
-	unlink(path);
-
-	if((sock = socket(PF_UNIX, SOCK_STREAM, 0)) == -1) {
-    printf("socket(): %d: %s\n", errno, strerror(errno));
-    exit(-1);
-  }
-
-  sock_un.sun_family = AF_UNIX;
-  strcpy(sock_un.sun_path, path);
-
-  if(bind(sock, (struct sockaddr*)&sock_un, SUN_LEN(&sock_un)) < 0) {
-    printf("bind(): %d: %s\n", errno, strerror(errno));
-    exit(-1);
-  }
-
-  server_un.sun_family = AF_UNIX;
-  strcpy(server_un.sun_path, SERVER_PATH);
-
-  if(connect(sock, (struct sockaddr*)&server_un, SUN_LEN(&sock_un)) < 0) {
-    printf("connect(): %d: %s\n", errno, strerror(errno));
-    exit(-1);
-  }
-
-  return sock;
+	else {
+		struct sockaddr_un addr;
+		fd = socket(AF_UNIX, SOCK_STREAM, 0);
+		if(fd < 0) {
+        	printf("Error while creating socket.\n");
+        	exit(1);
+    	}
+		addr.sun_family = AF_UNIX;
+		strcpy(addr.sun_path, path);
+		if(connect(fd, (struct sockaddr*)&addr, sizeof(struct sockaddr_un)) < 0) {
+			printf("Error while connecting to sever.\n");
+			exit(1);
+    	}
+	}
+    
+	op.op = NAME;
+	strcpy(op.name, name);
+	write(fd, (void*)&op, sizeof(operation)); //send name to server
+	read(fd, buf, sizeof(operation));
+	op = *(operation*)buf;
+	if(op.op == DENY) {
+		printf("Access to server denied.\n");
+		exit(1);
+	}
+	else {
+		printf("Access to server received.\n");
+	}
+	while(1) { //actual client work
+		read(fd, buf, sizeof(operation));
+		op = *(operation*)buf;
+		strcpy(op.name, name);
+		if(op.op == ADD || op.op == MULTIPLY || op.op == SUBTRACT || op.op == DIVIDE) {
+			calculate(&op);
+			printf("%d%c%d calculated.\n", op.arg1, to_string(op.op), op.arg2);
+		}
+		write(fd, (void*)&op, sizeof(operation));
+	}
+    return 0;
 }
