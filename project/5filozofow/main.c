@@ -27,7 +27,6 @@ int main(int argc, char const *argv[]) {
     philosophers = calloc(5, sizeof(pthread_t));
     for (int i = 0; i < 5; i++) {
         IDs[i] = i;
-        isEating[i] = false;
         if (pthread_create(&philosophers[i], NULL, threadFunction, IDs + i) != 0) {
             printf("pthread_create(): %d: %s\n", errno, strerror(errno));
             exit(1);
@@ -69,8 +68,6 @@ void *threadFunction(void *arg) {
             getFork(rightFork);
         }
         isEating[philosopherID] = true;
-        isForkTaken[leftFork] = true;
-        isForkTaken[rightFork] = true;
         for(int i=0;i<5;i++) {
             if(isForkTaken[i]) printf("| ");
             else printf("  ");
@@ -90,8 +87,6 @@ void *threadFunction(void *arg) {
         usleep(100000);
 
         isEating[philosopherID] = false;
-        isForkTaken[leftFork] = false;
-        isForkTaken[rightFork] = false;
         leaveFork(leftFork);
         leaveFork(rightFork);
     }
@@ -101,9 +96,11 @@ void *threadFunction(void *arg) {
 
 void getFork(int forkId) {
     pthread_mutex_lock(&mutexes[forkId]);
+    isForkTaken[forkId] = true;
 }
 
 void leaveFork(int forkId) {
+    isForkTaken[forkId] = false;
     pthread_mutex_unlock(&mutexes[forkId]);
 }
 
