@@ -9,16 +9,14 @@
 
 pthread_t *philosophers;
 pthread_mutex_t *mutexes;
+bool isEating[5];
+bool isForkTaken[5];
 bool START_JOB;
 
 void *threadFunction(void *);
-
 void getFork(int);
-
 void leaveFork(int);
-
 void atexitFunction(void);
-
 
 int main(int argc, char const *argv[]) {
     srand(time(NULL));
@@ -29,6 +27,7 @@ int main(int argc, char const *argv[]) {
     philosophers = calloc(5, sizeof(pthread_t));
     for (int i = 0; i < 5; i++) {
         IDs[i] = i;
+        isEating[i] = false;
         if (pthread_create(&philosophers[i], NULL, threadFunction, IDs + i) != 0) {
             printf("pthread_create(): %d: %s\n", errno, strerror(errno));
             exit(1);
@@ -61,7 +60,6 @@ void *threadFunction(void *arg) {
     int leftFork = philosopherID;
     int rightFork = (philosopherID + 1) % 5;
     while (true) {
-        printf("Philosopher %d : I'm thinking\n", philosopherID);
         usleep(rand() % 1500000 + 1000000);
         if (philosopherID % 2) {
             getFork(rightFork);
@@ -70,10 +68,30 @@ void *threadFunction(void *arg) {
             getFork(leftFork);
             getFork(rightFork);
         }
+        isEating[philosopherID] = true;
+        isForkTaken[leftFork] = true;
+        isForkTaken[rightFork] = true;
+        for(int i=0;i<5;i++) {
+            if(isForkTaken[i]) printf("| ");
+            else printf("  ");
 
-        printf("Philosopher %d : I'm eating\n", philosopherID);
+            if(isEating[i])printf("X  ");
+            else printf("  ");
+        }
+        printf("\n");
+        for(int i=0;i<5;i++){
+            if(!isForkTaken[i]) printf("| ");
+            else printf("  ");
+
+            if(!isEating[i])printf("X  ");
+            else printf("  ");
+        }
+        printf("\n\n----------------------------\n\n");
         usleep(100000);
 
+        isEating[philosopherID] = false;
+        isForkTaken[leftFork] = false;
+        isForkTaken[rightFork] = false;
         leaveFork(leftFork);
         leaveFork(rightFork);
     }
