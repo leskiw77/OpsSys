@@ -14,9 +14,14 @@ bool isForkTaken[5];
 bool START_JOB;
 
 void *threadFunction(void *);
+
 void getFork(int);
+
 void leaveFork(int);
+
 void atexitFunction(void);
+
+void printOutput(void);
 
 int main(int argc, char const *argv[]) {
     srand(time(NULL));
@@ -60,6 +65,7 @@ void *threadFunction(void *arg) {
     int rightFork = (philosopherID + 1) % 5;
     while (true) {
         usleep(rand() % 1500000 + 1000000);
+        // wait for forks :
         if (philosopherID % 2) {
             getFork(rightFork);
             getFork(leftFork);
@@ -68,22 +74,10 @@ void *threadFunction(void *arg) {
             getFork(rightFork);
         }
         isEating[philosopherID] = true;
-        for(int i=0;i<5;i++) {
-            if(isForkTaken[i]) printf("| ");
-            else printf("  ");
 
-            if(isEating[i])printf("X  ");
-            else printf("  ");
-        }
-        printf("\n");
-        for(int i=0;i<5;i++){
-            if(!isForkTaken[i]) printf("| ");
-            else printf("  ");
+        // print output :
+        printOutput();
 
-            if(!isEating[i])printf("X  ");
-            else printf("  ");
-        }
-        printf("\n\n----------------------------\n\n");
         usleep(100000);
 
         isEating[philosopherID] = false;
@@ -93,6 +87,36 @@ void *threadFunction(void *arg) {
     return NULL;
 }
 
+void printOutput() {
+    for (int i = 0; i < 5; i++) {
+        if (isForkTaken[i]) {
+            printf("! ");
+        } else {
+            printf("  ");
+        }
+
+        if (isEating[i]) {
+            printf("O ");
+        } else {
+            printf("  ");
+        }
+    }
+    printf("\n");
+    for (int i = 0; i < 5; i++) {
+        if (!isForkTaken[i]) {
+            printf("! ");
+        } else {
+            printf("  ");
+        }
+
+        if (!isEating[i]) {
+            printf("O ");
+        } else {
+            printf("  ");
+        }
+    }
+    printf("\n\n----------------------------\n\n");
+}
 
 void getFork(int forkId) {
     pthread_mutex_lock(&mutexes[forkId]);
