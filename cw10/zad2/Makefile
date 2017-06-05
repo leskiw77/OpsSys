@@ -19,6 +19,6 @@ helpers.o : helpers.h helpers.c
 	$(CC) -c helpers.c $(CFLAGS) -o helpers.o
 
 clean:
-	rm -f helpers.o barber.o client.o
+	rm -f helpers.o server.o client.o
 
 .PHONY: clean run

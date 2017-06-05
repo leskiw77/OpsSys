@@ -24,7 +24,7 @@ int type;
 
 char toString(Operator o);
 void calculate(Operation *o);
-void exit_handle(int s);
+void exitHandle(int s);
 
 int main(int argc, char** argv) {
     // PARSE ARGUMENTS :
@@ -44,11 +44,11 @@ int main(int argc, char** argv) {
         path = malloc(strlen(argv[3]) + 1);
         strcpy(path, argv[3]);
     } else {
-        printf("Wrong arguments.\nUsage:\n./client name network/local address [port]\n");
+        printf("Wrong arguments.\nargs:\n./client name network/local address [port]\n");
         exit(1);
     }
 
-	signal(SIGINT, exit_handle);
+	signal(SIGINT, exitHandle);
     char buffer[1024];
 	Operation oper;
 
@@ -65,11 +65,11 @@ int main(int argc, char** argv) {
     	addr.sin_port = htons(port); 
 
     	if(inet_pton(AF_INET, address, &addr.sin_addr) <= 0) {
-        	printf("Error while transforming addres.\n");
+        	printf("Error while transforming address.\n");
         	exit(1);
     	} 
 		if(connect(fd, (struct sockaddr*)&addr, sizeof(struct sockaddr_in)) < 0) {
-      	 	printf("Error while connecting to sever.\n");
+      	 	printf("Error while connecting to server.\n");
 			exit(1);
     	}
 	}
@@ -141,7 +141,7 @@ void calculate(Operation *o) {
 }
 
 // SEND EXIT REQUEST TO SERVER AND EXIT PROCESS :
-void exit_handle(int s) {
+void exitHandle(int s) {
     Operation o;
     o.op = EXIT;
     write(fd, (void*)&o, sizeof(o));
