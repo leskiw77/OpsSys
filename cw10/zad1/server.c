@@ -174,6 +174,7 @@ void * terminalThread(void *arg) {
     char buf[1000];
     Operation *op;
     while (1) {
+
         fgets(buf, 1000, stdin);
         op = parseData(buf);
         int id = randomClient();
@@ -184,7 +185,7 @@ void * terminalThread(void *arg) {
         int fd = clients[id].fd;
         write(fd, (void *) op, sizeof(Operation));
         free(op);
-    }
+        }
     return NULL;
 }
 
