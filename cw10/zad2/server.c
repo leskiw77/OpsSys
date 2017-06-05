@@ -4,33 +4,19 @@
 #include "helpers.h"
 
 short validatePort(short port);
-
 char *validatePath(char *path);
-
 void exitHandler(int signo);
-
-void cleanup(void);
-
+void cleanUp(void);
 int getWebSocket(short portNum);
-
 int getLocalSocket(char *path);
-
-void *pingerJob(void *);
-
-void *commanderJob(void *);
-
+void *pingerFunction(void *);
+void *terminalReaderFunction(void *);
 int prepareMonitor();
-
 void handleNewMessage(int fd);
-
-void tryRegister(int fd, struct sockaddr *addr, socklen_t aSize, Message *mess);
-
+void registration(int fd, struct sockaddr *addr, socklen_t aSize, Message *mess);
 void removeClient(int index);
-
 int pushCommand(char command, int op1, int op2, char *name);
-
 Client *findClient(char *name);
-
 int getSFD(char type);
 
 int webSocket;
@@ -42,7 +28,7 @@ int cN = 0;
 Client clients[50];
 int epoll;
 pthread_t pinger;
-pthread_t commander;
+pthread_t terminalReader;
 pthread_mutex_t clientsLock = PTHREAD_MUTEX_INITIALIZER;
 
 int main(int argc, char **argv) {
@@ -51,26 +37,26 @@ int main(int argc, char **argv) {
         exit(1);
     }
     if (signal(SIGINT, exitHandler) == SIG_ERR) {
-        throwError("Exit signal fail!");
+        printError("Exit signal fail!");
     }
-    if (atexit(cleanup) != 0) {
-        throwError("At exit failed!");
+    if (atexit(cleanUp) != 0) {
+        printError("At exit failed!");
     }
     short portNum = validatePort((short) atoi(argv[1]));
     unixPath = validatePath(argv[2]);
     webSocket = getWebSocket(portNum);
     localSocket = getLocalSocket(unixPath);
     epoll = prepareMonitor();
-    if (pthread_create(&pinger, NULL, pingerJob, NULL) != 0) {
-        throwError("Creating thread failed!");
+    if (pthread_create(&pinger, NULL, pingerFunction, NULL) != 0) {
+        printError("Creating thread failed!");
     }
-    if (pthread_create(&commander, NULL, commanderJob, NULL) != 0) {
-        throwError("Creating thread failed!");
+    if (pthread_create(&terminalReader, NULL, terminalReaderFunction, NULL) != 0) {
+        printError("Creating thread failed!");
     }
     struct epoll_event event;
     while (1) {
         if (epoll_wait(epoll, &event, 1, -1) == -1) {
-            throwError("Epoll_wait failed!");
+            printError("Epoll_wait failed!");
         }
         handleNewMessage(event.data.fd);
     }
@@ -79,28 +65,28 @@ int main(int argc, char **argv) {
 void handleNewMessage(int fd) {
     struct sockaddr *addr = malloc(ASIZE);
     socklen_t aSize = sizeof(struct sockaddr);
-    Message mess;
-    if (recvfrom(fd, &mess, sizeof(Message), 0, addr, &aSize) != sizeof(Message)) {
-        throwError("receiving new message failed!");
+    Message message;
+    if (recvfrom(fd, &message, sizeof(Message), 0, addr, &aSize) != sizeof(Message)) {
+        printError("receiving new messageage failed!");
     }
-    if (mess.type == LOGIN) {
-        tryRegister(fd, addr, aSize, &mess);
-    } else if (mess.type == RESULT) {
-        int result = ntohl(mess.result);
-        printf("\" = %d (calculated by client %s)\n", result, mess.name);
-    } else if (mess.type == PONG) {
+    if (message.type == LOGIN) {
+        registration(fd, addr, aSize, &message);
+    } else if (message.type == RESULT) {
+        int result = ntohl(message.result);
+        printf("\" = %d (calculated by client %s)\n", result, message.name);
+    } else if (message.type == PONG) {
         pthread_mutex_lock(&clientsLock);
         for (int i = 0; i < cN; i++) {
-            if (strcmp(clients[i].name, mess.name) == 0) {
+            if (strcmp(clients[i].name, message.name) == 0) {
                 clients[i].rec++;
             }
         }
         pthread_mutex_unlock(&clientsLock);
-    } else if (mess.type == LOGOUT) {
+    } else if (message.type == LOGOUT) {
         pthread_mutex_lock(&clientsLock);
         for (int i = 0; i < cN; i++) {
-            if (strcmp(clients[i].name, mess.name) == 0) {
-                printf("Client %s logged out!\n", mess.name);
+            if (strcmp(clients[i].name, message.name) == 0) {
+                printf("Client %s logged out!\n", message.name);
                 removeClient(i);
             }
         }
@@ -108,13 +94,13 @@ void handleNewMessage(int fd) {
     }
 }
 
-void tryRegister(int fd, struct sockaddr *addr, socklen_t aSize, Message *mess) {
+void registration(int fd, struct sockaddr *addr, socklen_t aSize, Message *mess) {
     char mType;
     pthread_mutex_lock(&clientsLock);
     if (cN == 50) {
         mType = FAILSIZE;
         if (sendto(fd, &mType, 1, 0, addr, aSize) != 1) {
-            throwError("Failsize message failed!");
+            printError("Failsize message failed!");
         }
         free(addr);
     } else {
@@ -122,7 +108,7 @@ void tryRegister(int fd, struct sockaddr *addr, socklen_t aSize, Message *mess) 
         if (client != NULL) {
             mType = FAILNAME;
             if (sendto(fd, &mType, 1, 0, addr, aSize) != 1) {
-                throwError("Failname message failed!");
+                printError("Failname message failed!");
             }
             free(addr);
         } else {
@@ -135,14 +121,14 @@ void tryRegister(int fd, struct sockaddr *addr, socklen_t aSize, Message *mess) 
             cN++;
             mType = SUCCESS;
             if (sendto(fd, &mType, 1, 0, addr, aSize) != 1) {
-                throwError("Success message failed!");
+                printError("Success message failed!");
             }
         }
     }
     pthread_mutex_unlock(&clientsLock);
 }
 
-void *pingerJob(void *arg) {
+void *pingerFunction(void *arg) {
     while (1) {
         //printf("ping!\n");
         pthread_mutex_lock(&clientsLock);
@@ -176,7 +162,7 @@ void removeClient(int i) {
     cN--;
 }
 
-void *commanderJob(void *arg) {
+void *terminalReaderFunction(void *arg) {
     char command;
     int op1, op2;
     char name[20];
@@ -258,17 +244,17 @@ int getSFD(char type) {
 int prepareMonitor() {
     int epoll = epoll_create1(0);
     if (epoll == -1) {
-        throwError("Error while creating epoll monitor");
+        printError("Error while creating epoll monitor");
     }
     struct epoll_event event;
     event.events = EPOLLIN | EPOLLPRI;
     event.data.fd = webSocket;
     if (epoll_ctl(epoll, EPOLL_CTL_ADD, webSocket, &event) == -1) {
-        throwError("Error of ctl for webSocket");
+        printError("Error of ctl for webSocket");
     }
     event.data.fd = localSocket;
     if (epoll_ctl(epoll, EPOLL_CTL_ADD, localSocket, &event) == -1) {
-        throwError("Error of ctl for localSocket");
+        printError("Error of ctl for localSocket");
     }
     return epoll;
 }
@@ -280,10 +266,10 @@ int getWebSocket(short portNum) {
     webAddress.sin_addr.s_addr = INADDR_ANY;
     int webSocket = socket(AF_INET, SOCK_DGRAM, 0);
     if (webSocket == -1) {
-        throwError("Error while creating webSocket");
+        printError("Error while creating webSocket");
     }
     if (bind(webSocket, &webAddress, sizeof(webAddress)) == -1) {
-        throwError("Error while webSocket binding");
+        printError("Error while webSocket binding");
     }
     printf("Server address is %s\n", inet_ntoa(webAddress.sin_addr));
     return webSocket;
@@ -297,17 +283,17 @@ int getLocalSocket(char *path) {
     }
     int localSocket = socket(AF_UNIX, SOCK_DGRAM, 0);
     if (localSocket == -1) {
-        throwError("Error while creating localSocket");
+        printError("Error while creating localSocket");
     }
     if (bind(localSocket, &localAddress, sizeof(localAddress)) == -1) {
-        throwError("Error while localSocket binding");
+        printError("Error while localSocket binding");
     }
     return localSocket;
 }
 
 short validatePort(short port) {
     if ((port < 1024) || (port > 60999)) {
-        throwError("Port must be a number between 1024 and 60999!");
+        printError("Port must be a number between 1024 and 60999!");
     }
     return port;
 }
@@ -325,7 +311,7 @@ void exitHandler(int signo) {
     exit(1);
 }
 
-void cleanup(void) {
+void cleanUp(void) {
     int allOk = 1;
     if (close(webSocket) == -1) {
         printf("Error while closing webSocket! Errno: %d, %s\n", errno, strerror(errno));

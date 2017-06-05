@@ -32,7 +32,7 @@ char *popFragment(char **origStr, char delim);
 
 char *trimWhite(char *origStr);
 
-void throwError(const char *err);
+void printError(const char *err);
 
 char *convertTime(const time_t *mtime);
 

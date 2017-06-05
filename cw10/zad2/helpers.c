@@ -79,11 +79,11 @@ char *trimWhite(char *origStr) {
         }
     }
     buffer[j++] = 0;
-    buffer = realloc(buffer, j); // bezcenny ram
+    buffer = realloc(buffer, j);
     return buffer;
 }
 
-void throwError(const char *err) {
+void printError(const char *err) {
     printf("Error! %s Errno: %d, %s\n", err, errno, strerror(errno));
     exit(3);
 }
@@ -98,17 +98,19 @@ char *convertTime(const time_t *mtime) {
 
 int getQID(char *path, int ID) {
     int key = ftok(path, ID);
-    if (key == -1) throwError ("Generation of key failed!");
+    if (key == -1) printError ("Generation of key failed!");
 
     int QID = msgget(key, 0);
-    if (QID == -1) throwError ("Opening queue failed!");
+    if (QID == -1) printError ("Opening queue failed!");
 
     return QID;
 }
 
 long getMicroTime() {
     struct timespec marker;
-    if (clock_gettime(CLOCK_MONOTONIC, &marker) == -1) throwError ("Getting time failed!");
+    if (clock_gettime(CLOCK_MONOTONIC, &marker) == -1) {
+        printError ("Error while getting time");
+    }
     return marker.tv_nsec / 1000;
 }
 
