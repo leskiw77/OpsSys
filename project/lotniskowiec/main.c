@@ -41,7 +41,7 @@ void *threadFunction(void *arg);
 int main(int argc, char const *argv[]) {
     if (argc != 4) {
         printf("Wrong arguments\n"
-                       "args: [program name] [number of planes] [N] [K]\n");
+                       "args: [number of planes] [N] [K]\n");
         exit(1);
     }
 
