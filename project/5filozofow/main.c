@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <time.h>
 #include <stdbool.h>
+#include <time.h>
 
 pthread_t *philosophers;
 pthread_mutex_t *mutexes;
@@ -15,7 +16,7 @@ bool START_JOB;
 
 void *threadFunction(void *);
 
-void getFork(int);
+bool getFork(int);
 
 void leaveFork(int);
 
@@ -66,23 +67,20 @@ void *threadFunction(void *arg) {
     while (true) {
         usleep(rand() % 1500000 + 1000000);
         // wait for forks :
-        if (philosopherID % 2) {
-            getFork(rightFork);
-            getFork(leftFork);
-        } else {
-            getFork(leftFork);
-            getFork(rightFork);
+
+
+        if(getFork(rightFork)){
+            if(getFork(leftFork)){
+                isEating[philosopherID] = true;
+                // print output :
+                printOutput();
+                usleep(10000*(rand()%5 + 1));
+                isEating[philosopherID] = false;
+                leaveFork(leftFork);
+            }
+            leaveFork(rightFork);
         }
-        isEating[philosopherID] = true;
 
-        // print output :
-        printOutput();
-
-        usleep(100000);
-
-        isEating[philosopherID] = false;
-        leaveFork(leftFork);
-        leaveFork(rightFork);
     }
     return NULL;
 }
@@ -118,9 +116,14 @@ void printOutput() {
     printf("\n\n----------------------------\n\n");
 }
 
-void getFork(int forkId) {
-    pthread_mutex_lock(&mutexes[forkId]);
+bool getFork(int forkId) {
+    struct timespec value;
+    value.tv_sec = 1;
+    if(pthread_mutex_timedlock(&mutexes[forkId], &value) == ETIMEDOUT){
+        return false;
+    };
     isForkTaken[forkId] = true;
+    return true;
 }
 
 void leaveFork(int forkId) {
